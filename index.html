@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c9a227">
+  <title>WD Construction Khon Kaen</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <h1>WD Construction <span>Khon Kaen</span></h1>
+      <p class="auth-sub">ระบบจัดการหน้างานก่อสร้าง</p>
+
+      <div id="loginFormView">
+        <h2>เข้าสู่ระบบ</h2>
+        <form id="loginForm" class="stack-form">
+          <input type="tel" id="loginPhone" placeholder="เบอร์โทรศัพท์" required>
+          <button type="submit">เข้าสู่ระบบ</button>
+        </form>
+        <p class="auth-toggle">ยังไม่มีบัญชี? <a href="#" id="showRegister">ลงทะเบียน</a></p>
+      </div>
+
+      <div id="registerFormView" hidden>
+        <h2>ลงทะเบียน</h2>
+        <form id="registerForm" class="stack-form">
+          <input type="text" id="regFirstName" placeholder="ชื่อ" required>
+          <input type="text" id="regLastName" placeholder="นามสกุล" required>
+          <input type="text" id="regPosition" placeholder="ตำแหน่ง / Job Title" required>
+          <input type="tel" id="regPhone" placeholder="เบอร์โทรศัพท์" required>
+          <input type="text" id="regProject" placeholder="โครงการ / ไซต์ (ถ้ามี)">
+          <button type="submit">ลงทะเบียน</button>
+        </form>
+        <p class="auth-toggle">มีบัญชีแล้ว? <a href="#" id="showLogin">เข้าสู่ระบบ</a></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="appBody" class="app" hidden>
+    <header>
+      <h1>WD Construction <span>Khon Kaen</span></h1>
+      <p>ระบบจัดการหน้างานก่อสร้าง</p>
+      <div class="header-actions">
+        <button id="openProfile" class="small">ตั้งค่าโปรไฟล์</button>
+        <button id="logoutBtn" class="small">ออกจากระบบ</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="view-menu" class="view active">
+        <h2>หน้าเมนูรวมหลัก</h2>
+        <div class="menu-grid" id="menuGrid">
+          <button type="button" class="menu-card" data-view="daily">
+            <div class="menu-icon">📋</div>
+            <div class="menu-label">รายงานประจำวัน</div>
+            <div class="menu-desc">บันทึกงาน กำลังคน สภาพอากาศ</div>
+          </button>
+          <button type="button" class="menu-card" data-view="meeting">
+            <div class="menu-icon">🗒️</div>
+            <div class="menu-label">รายงานการประชุม</div>
+            <div class="menu-desc">บันทึกมติและคำสั่งงาน</div>
+          </button>
+          <button type="button" class="menu-card" data-view="checklist">
+            <div class="menu-icon">✅</div>
+            <div class="menu-label">เช็คลิสต์และไฟล์ PDF</div>
+            <div class="menu-desc">ตรวจงานและเอกสารอ้างอิง</div>
+          </button>
+          <button type="button" class="menu-card" data-view="plans">
+            <div class="menu-icon">📐</div>
+            <div class="menu-label">แบบแปลน</div>
+            <div class="menu-desc">แบบแปลนหน้างาน</div>
+          </button>
+          <button type="button" class="menu-card" data-view="staff">
+            <div class="menu-icon">👷</div>
+            <div class="menu-label">ผู้ติดต่อ</div>
+            <div class="menu-desc">รายชื่อทีมงานและบุคคล</div>
+          </button>
+          <button type="button" class="menu-card" data-view="milestones">
+            <div class="menu-icon">📊</div>
+            <div class="menu-label">งวด / สถานะโครงการ</div>
+            <div class="menu-desc">ติดตามความคืบหน้างวด</div>
+          </button>
+          <button type="button" class="menu-card" data-view="history">
+            <div class="menu-icon">📅</div>
+            <div class="menu-label">ประวัติการใช้งาน</div>
+            <div class="menu-desc">บันทึกกิจกรรมทั้งหมด</div>
+          </button>
+          <button type="button" class="menu-card" data-view="houses">
+            <div class="menu-icon">🏠</div>
+            <div class="menu-label">บ้าน / งวดงาน</div>
+            <div class="menu-desc">ติดตามสถานะ 10 หลัง 10 งวด</div>
+          </button>
+        </div>
+      </section>
+
+      <section id="view-daily" class="view">
+        <h2>รายงานประจำวัน</h2>
+        <form id="dailyForm" class="stack-form">
+          <label class="field-label">วันที่รายงาน</label>
+          <input type="date" id="dailyDate" required>
+
+          <label class="field-label">ชื่อผู้รายงาน</label>
+          <input type="text" id="dailyForeman" placeholder="ชื่อ-นามสกุล" required>
+
+          <label class="field-label">โครงการ / ไซต์งาน</label>
+          <input type="text" id="dailyProject" placeholder="ชื่อโครงการ" required>
+
+          <label class="field-label">อยู่ระหว่างก่อสร้างงวดที่</label>
+          <input type="text" id="dailyPhase" placeholder="เช่น 3">
+
+          <label class="field-label">วันคาดการณ์จะแล้วเสร็จในงวดงานนี้</label>
+          <input type="date" id="dailyPhaseFinish">
+
+          <label class="field-label">ความคืบหน้าเทียบกับแผนงาน</label>
+          <div class="progress-row">
+            <input type="number" id="dailyProgressPercent" min="0" max="100" placeholder="%" class="progress-percent">
+            <select id="dailyProgressType">
+              <option value="" disabled selected>เลือกสถานะ</option>
+              <option value="ช้ากว่าแผน">ช้ากว่าแผน</option>
+              <option value="อยู่ในแผน">อยู่ในแผน</option>
+              <option value="เร็วกว่าแผน">เร็วกว่าแผน</option>
+            </select>
+          </div>
+
+          <div class="card manpower">
+            <strong>กำลังคน (คน)</strong>
+            <div id="manpowerRows" class="manpower-rows"></div>
+            <button type="button" id="addManpower" class="small full">+ เพิ่มกำลังคน</button>
+            <div class="mp-total">รวม: <span id="mpTotal">0</span> คน</div>
+          </div>
+
+          <label class="field-label">งานที่ทำวันนี้</label>
+          <textarea id="dailyWork" placeholder="เช่น เทคอนกรีตคานชั้น 2 เสร็จเรียบร้อย" required></textarea>
+
+          <label class="field-label">แผนงานวันถัดไป</label>
+          <textarea id="dailyPlan" placeholder="แผนคร่าวๆ สำหรับพรุ่งนี้"></textarea>
+
+          <label class="field-label">สภาพอากาศ</label>
+          <select id="dailyWeather" required>
+            <option value="" disabled selected>เลือกสภาพอากาศ</option>
+            <option value="แจ่มใส">แจ่มใส</option>
+            <option value="ครึ้มฟ้าครึ้มฝน">ครึ้มฟ้าครึ้มฝน</option>
+            <option value="ฝนตกเล็กน้อย">ฝนตกเล็กน้อย</option>
+            <option value="ฝนตกหนัก">ฝนตกหนัก</option>
+            <option value="ลมแรง / พายุ">ลมแรง / พายุ</option>
+          </select>
+
+          <label class="field-label">อุปสรรค / ปัญหาหน้างาน</label>
+          <textarea id="dailyIssue" placeholder="เช่น ฝนตกช่วงบ่าย หยุดงาน 2 ชั่วโมง, วัสดุส่งช้า"></textarea>
+
+          <label class="field-label">รูปภาพประกอบ (สูงสุด 6 รูป)</label>
+          <input type="file" id="dailyImage" accept="image/*" multiple>
+          <div id="dailyImagePreview" class="image-preview"></div>
+
+          <label class="field-label">วัสดุที่ขอจัดซื้อ</label>
+          <textarea id="dailyExtraMaterials" placeholder="ระบุวัสดุที่ขอซื้อเพิ่ม เช่น ปูนเพิ่ม 10 กระสอบ, ทรายละเอียด 5 ตัน"></textarea>
+
+          <label class="field-label">โน้ต / หมายเหตุ</label>
+          <textarea id="dailyNotes" placeholder="บันทึกเพิ่มเติมที่ต้องการแจ้งหรือระบุ"></textarea>
+
+          <div class="demo-actions">
+            <button type="button" id="loadDemo" class="small">โหลดข้อมูลทดสอบ</button>
+            <button type="submit">บันทึกรายงาน</button>
+          </div>
+        </form>
+        <ul id="dailyList" class="card-list"></ul>
+      </section>
+
+      <section id="view-meeting" class="view">
+        <h2>บันทึกประชุม / สั่งงาน</h2>
+        <form id="meetingForm" class="stack-form">
+          <input type="date" id="meetingDate" required>
+          <input type="text" id="meetingTopic" placeholder="หัวข้อประชุม/งาน" required>
+          <textarea id="meetingDecision" placeholder="มติ/คำสั่งหน้างาน" required></textarea>
+          <input type="text" id="meetingResponsible" placeholder="ผู้รับผิดชอบ" required>
+          <button type="submit">บันทึก</button>
+        </form>
+        <ul id="meetingList" class="card-list"></ul>
+      </section>
+
+      <section id="view-checklist" class="view">
+        <h2>เช็คลิสต์ตรวจงานก่อสร้าง</h2>
+        <div id="inspectionCategories" class="inspection-categories"></div>
+        <h3 style="margin-top:24px; margin-bottom:10px">ประวัติการตรวจ</h3>
+        <ul id="inspectionHistory" class="card-list"></ul>
+      </section>
+
+      <section id="view-plans" class="view">
+        <h2>แบบแปลนหน้างาน</h2>
+        <button type="button" id="toggleAdminPlan" class="small full">โหมดแอดมิน: เพิ่มแบบแปลน</button>
+        <form id="planForm" class="stack-form" hidden>
+          <label class="field-label">ชื่อแบบแปลน</label>
+          <input type="text" id="planName" placeholder="เช่น แบบบ้าน Modern Loft 2 ชั้น" required>
+          <label class="field-label">สถานที่ / โครงการ</label>
+          <input type="text" id="planLocation" placeholder="เช่น ไซต์งาน The Forest ลาดพร้าว" required>
+          <label class="field-label">ไฟล์ PDF จากเครื่อง</label>
+          <input type="file" id="planFile" accept=".pdf,application/pdf">
+          <label class="field-label">หรือลิงก์ PDF (URL)</label>
+          <input type="url" id="planUrl" placeholder="https://.../plan.pdf">
+          <button type="submit">บันทึกแบบแปลน</button>
+        </form>
+        <ul id="planList" class="card-list plan-list"></ul>
+      </section>
+
+      <section id="view-staff" class="view">
+        <h2>รายชื่อผู้ติดต่อ</h2>
+        <form id="staffForm" class="stack-form">
+          <label class="field-label">หมวดหมู่</label>
+          <select id="staffCategory" required>
+            <option value="executive">ผู้บริหาร / เจ้าของโครงการ</option>
+            <option value="engineering">ทีมวิศวกร / ผู้จัดการโครงการ</option>
+            <option value="foreman">โฟร์แมนและทีมงานหน้างาน</option>
+            <option value="procurement">ฝ่ายจัดซื้อ / สโตร์วัสดุ</option>
+            <option value="subcon">ผู้รับเหมาช่วง</option>
+          </select>
+          <label class="field-label">รูปภาพโปรไฟล์</label>
+          <input type="file" id="staffImage" accept="image/*">
+          <div id="staffImagePreview" class="image-preview"></div>
+          <label class="field-label">ชื่อ-นามสกุล</label>
+          <input type="text" id="staffName" placeholder="ชื่อ-นามสกุล" required>
+          <label class="field-label">ชื่อเล่น</label>
+          <input type="text" id="staffNickname" placeholder="เช่น คุณบอส">
+          <label class="field-label">ตำแหน่ง / หน้าที่</label>
+          <input type="text" id="staffRole" placeholder="เช่น กรรมการผู้จัดการ / โฟร์แมนโซน A" required>
+          <label class="field-label">เบอร์โทรศัพท์</label>
+          <input type="tel" id="staffPhone" placeholder="081-xxx-xxxx" required>
+          <button type="submit">เพิ่มรายชื่อ</button>
+        </form>
+        <div id="staffList"></div>
+      </section>
+
+      <section id="view-admin" class="view">
+        <h2>หน้าจัดการระบบสำหรับแอดมิน</h2>
+        <div class="menu-grid admin-menu-grid" id="adminMenuGrid">
+          <button type="button" class="menu-card" data-view="checklist">
+            <div class="menu-icon">✅</div>
+            <div class="menu-label">เช็คลิสต์และไฟล์ PDF</div>
+            <div class="menu-desc">อัปโหลดเอกสารประจำหมวด</div>
+          </button>
+          <button type="button" class="menu-card" data-view="staff">
+            <div class="menu-icon">👷</div>
+            <div class="menu-label">ผู้ติดต่อ / ทีมงาน</div>
+            <div class="menu-desc">เพิ่ม/แก้ไข/ลบรายชื่อ</div>
+          </button>
+          <button type="button" class="menu-card" data-view="plans">
+            <div class="menu-icon">📐</div>
+            <div class="menu-label">แบบแปลน</div>
+            <div class="menu-desc">จัดการแบบแปลนโครงการ</div>
+          </button>
+          <button type="button" class="menu-card" data-view="milestones">
+            <div class="menu-icon">📊</div>
+            <div class="menu-label">งวด / ตารางตรวจงาน</div>
+            <div class="menu-desc">ติดตามงวดและสถานะ</div>
+          </button>
+          <button type="button" class="menu-card" data-view="houses">
+            <div class="menu-icon">🏠</div>
+            <div class="menu-label">บ้าน / งวดงาน</div>
+            <div class="menu-desc">จัดการ 10 หลัง 10 งวด</div>
+          </button>
+        </div>
+        <hr class="admin-divider">
+        <h3>อัปโหลดเอกสาร PDF ประจำรายการตรวจ</h3>
+        <form id="adminDocForm" class="stack-form">
+          <label class="field-label">หมวดเช็คลิสต์</label>
+          <select id="adminCategory" required>
+            <option value="" disabled selected>เลือกหมวด</option>
+          </select>
+          <label class="field-label">หัวข้อย่อย</label>
+          <select id="adminSub" required>
+            <option value="" disabled selected>เลือกหัวข้อย่อย</option>
+          </select>
+          <label class="field-label">รายการตรวจ</label>
+          <select id="adminTask" required>
+            <option value="" disabled selected>เลือกรายการตรวจ</option>
+          </select>
+          <label class="field-label">ชื่อเอกสาร</label>
+          <input type="text" id="adminDocTitle" placeholder="เช่น มาตรฐานการตรวจงานฐานราก" required>
+          <label class="field-label">ไฟล์ PDF</label>
+          <input type="file" id="adminDocFile" accept=".pdf,application/pdf" required>
+          <button type="submit">อัปโหลด PDF ประจำรายการ</button>
+        </form>
+        <ul id="adminDocList" class="card-list"></ul>
+      </section>
+
+      <section id="view-history" class="view">
+        <h2>ประวัติการใช้งาน</h2>
+        <div id="historyFilter" class="filter-row">
+          <button type="button" class="filter-btn active" data-filter="all">ทั้งหมด</button>
+          <button type="button" class="filter-btn" data-filter="dailyReports">รายงาน</button>
+          <button type="button" class="filter-btn" data-filter="meetings">ประชุม</button>
+          <button type="button" class="filter-btn" data-filter="staff">ผู้ติดต่อ</button>
+          <button type="button" class="filter-btn" data-filter="milestones">งวด</button>
+          <button type="button" class="filter-btn" data-filter="inspectionHistory">เช็คลิสต์</button>
+        </div>
+        <ul id="historyList" class="card-list"></ul>
+      </section>
+
+      <section id="view-milestones" class="view">
+        <h2>ตารางงวดงานบ้านแต่ละหลัง</h2>
+        <form id="milestoneForm" class="stack-form">
+          <input type="hidden" id="milestoneId">
+          <label class="field-label">ชื่อบ้าน / โครงการ</label>
+          <input type="text" id="milestoneName" placeholder="เช่น แบบบ้าน Modern Loft 2 ชั้น" required>
+          <label class="field-label">สถานที่ / ไซต์งาน</label>
+          <input type="text" id="milestoneLocation" placeholder="เช่น ไซต์งาน The Forest" required>
+          <label class="field-label">งวดงานปัจจุบัน</label>
+          <input type="text" id="milestoneStage" placeholder="เช่น งวดที่ 3: โครงสร้างชั้นบนและหลังคา" required>
+          <label class="field-label">ความคืบหน้า (%)</label>
+          <input type="number" id="milestoneProgress" min="0" max="100" value="0" required>
+          <label class="field-label">สถานะงวดงาน</label>
+          <select id="milestoneStatus" required>
+            <option value="pending">🔴 รอตรวจรับงวด</option>
+            <option value="inprogress">🟠 กำลังดำเนินการ</option>
+            <option value="passed">🟢 ผ่านงวดนี้แล้ว</option>
+          </select>
+          <label class="field-label">หมายเหตุ</label>
+          <textarea id="milestoneRemarks" placeholder="เช่น รอเทปูนวันพฤหัสบดี"></textarea>
+          <button type="submit" id="milestoneSubmit">เพิ่มรายการ</button>
+          <button type="button" id="milestoneCancel" class="small" hidden>ยกเลิก</button>
+        </form>
+        <ul id="milestoneList" class="card-list milestone-list"></ul>
+      </section>
+
+      <section id="view-houses" class="view">
+        <div id="houseListView">
+          <h2>รายการบ้าน / งวดงาน</h2>
+          <div id="houseList" class="house-list"></div>
+        </div>
+        <div id="houseDetailView" hidden>
+          <div class="detail-header">
+            <button type="button" id="backToHouses" class="small">← กลับ</button>
+            <h2 id="houseDetailTitle"></h2>
+          </div>
+          <div class="admin-edit-note" id="houseAdminNote" hidden>โหมดแก้ไข: สามารถแก้ไขชื่อบ้านและรายละเอียดแต่ละงวดได้</div>
+          <div id="phaseList" class="phase-list"></div>
+          <button type="button" id="saveHouseDetail" class="small" hidden>บันทึกการเปลี่ยนแปลง</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button data-view="menu" class="nav-btn active">☰ เมนู</button>
+      <button data-view="daily" class="nav-btn">รายงาน</button>
+      <button data-view="meeting" class="nav-btn">ประชุม</button>
+      <button data-view="checklist" class="nav-btn">เช็คลิสต์</button>
+      <button data-view="plans" class="nav-btn">แบบแปลน</button>
+      <button data-view="staff" class="nav-btn">ผู้ติดต่อ</button>
+      <button data-view="milestones" class="nav-btn">งวด</button>
+      <button data-view="history" class="nav-btn">ประวัติ</button>
+      <button data-view="admin" class="nav-btn">🔒 แอดมิน</button>
+    </nav>
+
+    <footer>
+      <button id="installBtn" hidden>ติดตั้งแอป</button>
+    </footer>
+  </div>
+
+  <div id="pdfModal" class="modal" hidden>
+    <div class="modal-header">
+      <h3 id="pdfTitle"></h3>
+      <button id="closePdf">ปิด</button>
+    </div>
+    <embed id="pdfEmbed" type="application/pdf" width="100%" height="80vh">
+  </div>
+
+  <div id="profileModal" class="modal" hidden>
+    <div class="modal-card">
+      <h3>โปรไฟล์ผู้รายงาน</h3>
+      <form id="profileForm" class="stack-form">
+        <input type="text" id="pFirstName" placeholder="ชื่อ" required>
+        <input type="text" id="pLastName" placeholder="นามสกุล" required>
+        <input type="text" id="pPosition" placeholder="ตำแหน่ง" required>
+        <input type="text" id="pProject" placeholder="โครงการ/ไซต์งานหลัก" required>
+        <button type="submit">บันทึกโปรไฟล์</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="exportModal" class="modal" hidden>
+    <div class="modal-card export-card">
+      <h3>ส่งออกรายงาน</h3>
+      <div id="exportArea" class="export-area">
+        <div id="exportReport" class="export-page"></div>
+        <div class="page-break"></div>
+        <div id="exportPhotos" class="export-page"></div>
+      </div>
+      <div class="export-actions">
+        <button type="button" id="exportPng">บันทึก PNG</button>
+        <button type="button" id="exportPdf">บันทึก PDF</button>
+        <button type="button" id="shareLine" class="line-share">แชร์ไป LINE</button>
+        <button type="button" id="closeExport" class="small">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inspectionModal" class="modal" hidden>
+    <div class="modal-card checklist-modal">
+      <h3 id="inspectionTitle">เช็คลิสต์</h3>
+      <div id="inspectionList" class="foundation-list"></div>
+      <div class="modal-actions">
+        <button type="button" id="saveInspection" class="full">บันทึกผลการตรวจ</button>
+        <button type="button" id="closeInspection" class="small">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminGate" class="modal">
+    <div class="modal-card">
+      <h2>เข้าสู่ระบบแอดมิน</h2>
+      <p>กรอกรหัสผ่านเพื่อจัดการข้อมูลหลักของโครงการ</p>
+      <form id="adminGateForm" class="stack-form">
+        <label class="field-label">รหัสแอดมิน</label>
+        <input type="password" id="adminCode" placeholder="รหัสแอดมิน" required>
+        <button type="submit">เข้าสู่ระบบ</button>
+        <button type="button" id="closeAdminGate" class="small">ยกเลิก</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
