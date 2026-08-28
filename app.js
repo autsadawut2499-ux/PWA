@@ -48,7 +48,7 @@ loadCurrentUser();
 
 function userKey(key) { return currentUser ? `u_${currentUser.id}_${key}` : key; }
 
-const API_BASE = 'http://localhost:8081/api';
+const API_BASE = location.hostname === 'localhost' ? 'http://localhost:8081/api' : '/api';
 
 function load(key, def) {
   try { return JSON.parse(localStorage.getItem(userKey(key))) || def; }
@@ -225,7 +225,7 @@ const navBtns = $$('.nav-btn');
 function showView(name) {
   if (name === 'admin' && sessionStorage.getItem('adminUnlocked') !== '1') {
     adminGateTarget = 'admin';
-    $('adminGate').classList.add('active');
+    $('adminGate').hidden = false;
     return;
   }
   views.forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
@@ -261,7 +261,7 @@ if ($('adminGateForm')) {
       return;
     }
     sessionStorage.setItem('adminUnlocked', '1');
-    $('adminGate').classList.remove('active');
+    $('adminGate').hidden = true;
     $('adminCode').value = '';
     populateAdminCategoryOptions();
     renderAdminDocs();
@@ -272,7 +272,7 @@ if ($('adminGateForm')) {
 
 if ($('closeAdminGate')) {
   $('closeAdminGate').addEventListener('click', () => {
-    $('adminGate').classList.remove('active');
+    $('adminGate').hidden = true;
     $('adminCode').value = '';
     adminGateTarget = null;
   });

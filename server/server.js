@@ -267,11 +267,20 @@ app.get('/api/files/:userId', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8081;
-initDb().then(() => {
-  app.listen(PORT, () => {
-    console.log(`WD Construction API running on http://localhost:${PORT}`);
+
+module.exports = app;
+
+if (require.main === module) {
+  initDb().then(() => {
+    app.listen(PORT, () => {
+      console.log(`WD Construction API running on http://localhost:${PORT}`);
+    });
+  }).catch((err) => {
+    console.error('DB init failed:', err);
+    process.exit(1);
   });
-}).catch((err) => {
-  console.error('DB init failed:', err);
-  process.exit(1);
-});
+} else {
+  initDb().catch((err) => {
+    console.error('DB init failed (serverless):', err);
+  });
+}
