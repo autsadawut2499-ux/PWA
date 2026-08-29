@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -6,7 +7,6 @@ const { S3Client, PutObjectCommand, GetObjectCommand, HeadBucketCommand } = requ
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const multer = require('multer');
 const crypto = require('crypto');
-const path = require('path');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
