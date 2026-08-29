@@ -274,53 +274,51 @@ button.full,
 
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
   padding: 8px 0 24px;
 }
 
 .menu-card {
-  background: #ffffff;
-  color: #111111;
-  border: 1px solid #dbeafe;
+  background: #d4af37;
+  color: #000000;
+  border: 1px solid #b8972b;
   border-radius: 16px;
-  padding: 20px 12px;
-  text-align: center;
+  padding: 18px 16px;
+  text-align: left;
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  align-items: flex-start;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 
 .menu-card:active {
   transform: scale(0.98);
-  box-shadow: inset 0 0 0 2px #e0f2fe;
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.2);
 }
 
 .menu-card:hover {
-  background: #f8fafc;
-  border-color: #bfdbfe;
+  background: #ffd700;
+  border-color: #c5a028;
 }
 
 .menu-icon {
-  font-size: 2rem;
-  line-height: 1;
-  margin-bottom: 4px;
+  display: none;
 }
 
 .menu-label {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #1e3a5f;
+  color: #000000;
   line-height: 1.25;
 }
 
 .menu-desc {
-  font-size: 0.8rem;
-  color: #64748b;
+  font-size: 0.85rem;
+  color: #000000;
   line-height: 1.3;
 }
 
