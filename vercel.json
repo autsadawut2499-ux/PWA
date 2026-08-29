@@ -1,12 +1,12 @@
 {
   "version": 2,
   "functions": {
-    "server/server.js": {
+    "api/index.js": {
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "server/server.js" },
+    { "source": "/api/:path*", "destination": "api/index.js" },
     { "source": "/style.css", "destination": "/style.css" },
     { "source": "/app.js", "destination": "/app.js" },
     { "source": "/sw.js", "destination": "/sw.js" },
