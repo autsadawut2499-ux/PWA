@@ -1,11 +1,17 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "server/server.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "server/server.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "functions": {
+    "server/server.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "server/server.js" },
+    { "source": "/style.css", "destination": "/style.css" },
+    { "source": "/app.js", "destination": "/app.js" },
+    { "source": "/sw.js", "destination": "/sw.js" },
+    { "source": "/manifest.json", "destination": "/manifest.json" },
+    { "source": "/icon.svg", "destination": "/icon.svg" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
