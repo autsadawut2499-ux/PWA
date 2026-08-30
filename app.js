@@ -2120,18 +2120,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 async function runInstallPrompt() {
-  if (window.deferredPrompt) {
+  if (window.deferredPrompt && typeof window.deferredPrompt.prompt === 'function') {
     window.deferredPrompt.prompt();
     await window.deferredPrompt.userChoice;
     window.deferredPrompt = null;
     hideInstallBanner();
   } else {
-    const ua = navigator.userAgent.toLowerCase();
-    const isIOS = /iphone|ipad|ipod/.test(ua);
-    const msg = isIOS
-      ? 'สำหรับ iPhone/iPad: เปิด Safari แล้วกดปุ่ม แชร์ ด้านล่าง แล้วเลือก "เพิ่มลงหน้าจอโฮม"'
-      : 'สำหรับ Android: เปิด Chrome แล้วกด ⋮ มุมบนขวา แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มลงหน้าจอหลัก"';
-    alert('ไม่สามารถแสดงป๊อปอัปติดตั้งได้\n' + msg);
+    console.log('Install prompt is not ready yet');
   }
 }
 
