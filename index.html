@@ -293,19 +293,19 @@
           <select id="adminCategory" required>
             <option value="" disabled selected>เลือกหมวด</option>
           </select>
-          <label class="field-label">หัวข้อย่อย</label>
-          <select id="adminSub" required>
-            <option value="" disabled selected>เลือกหัวข้อย่อย</option>
+          <label class="field-label">หัวข้อย่อย (ทางเลือก)</label>
+          <select id="adminSub">
+            <option value="" selected>ทั้งหมดในหมวด</option>
           </select>
-          <label class="field-label">รายการตรวจ</label>
-          <select id="adminTask" required>
-            <option value="" disabled selected>เลือกรายการตรวจ</option>
+          <label class="field-label">รายการตรวจ (ทางเลือก)</label>
+          <select id="adminTask">
+            <option value="" selected>ทั้งหมดในหัวข้อย่อย</option>
           </select>
           <label class="field-label">ชื่อเอกสาร</label>
           <input type="text" id="adminDocTitle" placeholder="เช่น มาตรฐานการตรวจงานฐานราก" required>
           <label class="field-label">ไฟล์ PDF</label>
           <input type="file" id="adminDocFile" accept=".pdf,application/pdf" required>
-          <button type="submit">อัปโหลด PDF ประจำรายการ</button>
+          <button type="submit">อัปโหลด PDF ประจำหมวด/หัวข้อ/รายการ</button>
         </form>
         <ul id="adminDocList" class="card-list"></ul>
       </section>

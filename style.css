@@ -1386,7 +1386,8 @@ button.small.full {
   gap: 8px;
 }
 
-.view-cat-doc {
+.view-cat-doc,
+.view-sub-doc {
   background: var(--primary);
   color: #1a1a1a;
   border: none;
@@ -1395,6 +1396,9 @@ button.small.full {
   font-size: 0.85rem;
   font-weight: 600;
   text-align: left;
+  cursor: pointer;
+  display: block;
+  width: 100%;
 }
 
 .auth-screen {

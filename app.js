@@ -903,7 +903,7 @@ function renderInspectionCategories() {
   INSP_CATEGORIES.forEach((cat) => {
     const card = document.createElement('div');
     card.className = 'insp-category';
-    card.innerHTML = `<h3>${escapeHtml(cat.label)}</h3>`;
+    card.innerHTML = `<h3>${escapeHtml(cat.label)}</h3>${categoryDocButtons(cat.id)}`;
     const grid = document.createElement('div');
     grid.className = 'insp-subs';
     cat.subs.forEach((sub) => {
@@ -935,7 +935,7 @@ function closeInspection() {
 
 function renderInspection(sub) {
   const box = $('inspectionList');
-  box.innerHTML = '';
+  box.innerHTML = subDocButtons(sub.id) || '';
   const subState = inspectionState[sub.id] || {};
   sub.items.forEach((item) => {
     const state = subState[item.id] || { status: '', notes: '' };
@@ -1018,6 +1018,8 @@ $('inspectionList').addEventListener('click', (e) => {
     const itemId = e.target.dataset.itemid;
     const docs = (adminDocCache || []).filter((d) => d.taskId === itemId);
     if (docs.length) viewAdminDocById(Number(docs[0].id));
+  } else if (e.target.classList.contains('view-sub-doc')) {
+    viewAdminDocById(Number(e.target.dataset.docid));
   }
 });
 
@@ -1210,9 +1212,9 @@ function populateAdminSubOptions() {
   const taskSel = $('adminTask');
   if (!catSel || !subSel || !taskSel) return;
   const cat = INSP_CATEGORIES.find((c) => c.id === catSel.value);
-  subSel.innerHTML = '<option value="" disabled selected>เลือกหัวข้อย่อย</option>' +
+  subSel.innerHTML = '<option value="" selected>ทั้งหมดในหมวด</option>' +
     (cat ? cat.subs.map((s) => `<option value="${s.id}">${escapeHtml(s.label)}</option>`).join('') : '');
-  taskSel.innerHTML = '<option value="" disabled selected>เลือกรายการตรวจ</option>';
+  taskSel.innerHTML = '<option value="" selected>ทั้งหมดในหัวข้อย่อย</option>';
 }
 
 function populateAdminTaskOptions() {
@@ -1222,7 +1224,7 @@ function populateAdminTaskOptions() {
   if (!catSel || !subSel || !taskSel) return;
   const cat = INSP_CATEGORIES.find((c) => c.id === catSel.value);
   const sub = cat ? cat.subs.find((s) => s.id === subSel.value) : null;
-  taskSel.innerHTML = '<option value="" disabled selected>เลือกรายการตรวจ</option>' +
+  taskSel.innerHTML = '<option value="" selected>ทั้งหมดในหัวข้อย่อย</option>' +
     (sub ? sub.items.map((i) => `<option value="${i.id}">${escapeHtml(i.label)}</option>`).join('') : '');
 }
 
@@ -1259,23 +1261,38 @@ async function viewAdminDocById(id) {
     const doc = docs.find((d) => d.id === Number(id));
     if (!doc || !doc.file) return;
     if (currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
-    currentPdfUrl = URL.createObjectURL(doc.file);
+    const blob = new Blob([doc.file], { type: doc.type || 'application/pdf' });
+    currentPdfUrl = URL.createObjectURL(blob);
     $('pdfEmbed').src = currentPdfUrl;
     $('pdfTitle').textContent = doc.title;
     $('pdfModal').hidden = false;
   } catch (err) {
+    console.error(err);
     alert('ไม่สามารถเปิดเอกสารได้');
   }
 }
 
 function categoryDocButtons(categoryId) {
-  const docs = adminDocCache ? adminDocCache.filter((d) => d.categoryId === categoryId) : [];
+  const docs = adminDocCache ? adminDocCache.filter((d) => d.categoryId === categoryId && !d.subId && !d.taskId) : [];
   if (!docs.length) return '';
   return `
     <div class="cat-docs">
-      <b>เอกสารอ้างอิง:</b>
+      <b>เอกสารอ้างอิงหมวด:</b>
       <div class="cat-docs-list">
         ${docs.map((d) => `<button type="button" class="view-cat-doc" data-docid="${d.id}">${escapeHtml(d.title)}</button>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function subDocButtons(subId) {
+  const docs = adminDocCache ? adminDocCache.filter((d) => d.subId === subId && !d.taskId) : [];
+  if (!docs.length) return '';
+  return `
+    <div class="cat-docs">
+      <b>เอกสารอ้างอิงหัวข้อ:</b>
+      <div class="cat-docs-list">
+        ${docs.map((d) => `<button type="button" class="view-sub-doc" data-docid="${d.id}">${escapeHtml(d.title)}</button>`).join('')}
       </div>
     </div>
   `;
@@ -1299,12 +1316,12 @@ $('adminDocForm').addEventListener('submit', async (e) => {
   const file = $('adminDocFile').files[0];
   if (!file) return;
   const catId = $('adminCategory').value;
-  const subId = $('adminSub').value;
-  const taskId = $('adminTask').value;
-  if (!catId || !subId || !taskId) {
-    alert('กรุณาเลือกหมวด หัวข้อย่อย และรายการตรวจ');
+  if (!catId) {
+    alert('กรุณาเลือกหมวดเช็คลิสต์');
     return;
   }
+  const subId = $('adminSub').value || null;
+  const taskId = $('adminTask').value || null;
   try {
     const buffer = await file.arrayBuffer();
     const record = {
@@ -1318,11 +1335,15 @@ $('adminDocForm').addEventListener('submit', async (e) => {
     };
     await addAdminDoc(record);
     $('adminDocForm').reset();
+    populateAdminCategoryOptions();
+    populateAdminSubOptions();
+    populateAdminTaskOptions();
     await renderAdminDocs();
     await refreshAdminDocCache();
     renderInspectionCategories();
     alert('อัปโหลดเอกสารแล้ว');
   } catch (err) {
+    console.error(err);
     alert('อัปโหลดไม่สำเร็จ');
   }
 });
