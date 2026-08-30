@@ -46,7 +46,7 @@ function saveCurrentUser() { saveGlobal('currentUser', currentUser); }
 loadUsers();
 loadCurrentUser();
 
-const EXPORT_SCALE = Math.min(4, Math.max(1, window.devicePixelRatio || 1));
+const EXPORT_SCALE = Math.min(4, Math.max(2, (window.devicePixelRatio || 1) * 2));
 const EXPORT_WIDTH = window.innerWidth || 390;
 const EXPORT_HEIGHT = window.innerHeight || 844;
 
