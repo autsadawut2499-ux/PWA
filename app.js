@@ -2281,32 +2281,44 @@ function combineCanvases(c1, c2) {
   return canvas;
 }
 
-async function downloadCombinedImage(type, ext, quality = 0.95, scale = EXPORT_SCALE) {
-  if (currentExportIndex === null) throw new Error('No report selected for export');
-  if (typeof html2canvas !== 'function') throw new Error('html2canvas not loaded');
-  const page1 = await captureOffscreen($('exportReport'), scale);
-  const page2 = await captureOffscreen($('exportPhotos'), scale);
-  const combined = combineCanvases(page1, page2);
-  const dataUrl = combined.toDataURL(type, type === 'image/jpeg' ? quality : undefined);
+function downloadDataUrl(dataUrl, filename) {
   const a = document.createElement('a');
   a.href = dataUrl;
-  a.download = `daily-report-${dailyReports[currentExportIndex].date}.${ext}`;
+  a.download = filename;
   a.click();
 }
 
-async function shareCombinedImage(scale = EXPORT_SCALE) {
+async function downloadBothImages(type, ext, quality = 0.95, scale = EXPORT_SCALE) {
   if (currentExportIndex === null) throw new Error('No report selected for export');
   if (typeof html2canvas !== 'function') throw new Error('html2canvas not loaded');
   const page1 = await captureOffscreen($('exportReport'), scale);
   const page2 = await captureOffscreen($('exportPhotos'), scale);
-  const combined = combineCanvases(page1, page2);
+  const date = dailyReports[currentExportIndex].date;
+  const q = type === 'image/jpeg' ? quality : undefined;
+  downloadDataUrl(page1.toDataURL(type, q), `daily-report-${date}-01.${ext}`);
+  setTimeout(() => {
+    downloadDataUrl(page2.toDataURL(type, q), `daily-report-${date}-02.${ext}`);
+  }, 200);
+}
+
+function canvasToFile(canvas, filename, type = 'image/jpeg', quality = 0.92) {
   return new Promise((resolve, reject) => {
-    combined.toBlob((blob) => {
-      if (!blob) return reject(new Error('Combined image toBlob returned null'));
-      const file = new File([blob], `daily-report-${dailyReports[currentExportIndex].date}.jpg`, { type: 'image/jpeg' });
-      resolve(file);
-    }, 'image/jpeg', 0.92);
+    canvas.toBlob((blob) => {
+      if (!blob) return reject(new Error('Canvas toBlob returned null'));
+      resolve(new File([blob], filename, { type }));
+    }, type, quality);
   });
+}
+
+async function shareBothImages(scale = EXPORT_SCALE) {
+  if (currentExportIndex === null) throw new Error('No report selected for export');
+  if (typeof html2canvas !== 'function') throw new Error('html2canvas not loaded');
+  const page1 = await captureOffscreen($('exportReport'), scale);
+  const page2 = await captureOffscreen($('exportPhotos'), scale);
+  const date = dailyReports[currentExportIndex].date;
+  const reportFile = await canvasToFile(page1, `daily-report-${date}-01.jpg`, 'image/jpeg', 0.92);
+  const photosFile = await canvasToFile(page2, `daily-report-${date}-02.jpg`, 'image/jpeg', 0.92);
+  return [reportFile, photosFile];
 }
 
 async function buildExportPdf() {
@@ -2327,7 +2339,7 @@ async function buildExportPdf() {
 
 $('exportPng').addEventListener('click', async () => {
   try {
-    await downloadCombinedImage('image/png', 'png');
+    await downloadBothImages('image/png', 'png');
     console.log('PNG export completed');
   } catch (err) {
     console.error('PNG export failed:', err);
@@ -2350,15 +2362,26 @@ $('shareLine').addEventListener('click', async () => {
   const title = 'รายงานประจำวัน';
   const text = 'รายงานประจำวัน WD Construction Khon Kaen';
   try {
-    const file = await shareCombinedImage();
+    const [reportFile, photosFile] = await shareBothImages();
 
-    // 1) Native file share (best for LINE)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title, text });
+    // 1) Native file share with both images (best for LINE)
+    if (navigator.canShare && navigator.canShare({ files: [reportFile, photosFile] })) {
+      await navigator.share({ files: [reportFile, photosFile], title, text });
       return;
     }
 
-    // 2) Plain text share for browsers without file sharing
+    // 2) Share report first, then photos consecutively
+    if (navigator.canShare && navigator.canShare({ files: [reportFile] })) {
+      await navigator.share({ files: [reportFile], title, text });
+      try {
+        await navigator.share({ files: [photosFile], title, text });
+      } catch (photoErr) {
+        console.warn('Photo share failed or cancelled:', photoErr);
+      }
+      return;
+    }
+
+    // 3) Plain text share for browsers without file sharing
     if (navigator.share && !navigator.canShare) {
       await navigator.share({ title, text });
       return;
@@ -2369,7 +2392,7 @@ $('shareLine').addEventListener('click', async () => {
     if (currentUser && currentUser.id) {
       try {
         const form = new FormData();
-        form.append('file', file);
+        form.append('file', reportFile);
         const res = await fetch(`${API_BASE}/upload/${currentUser.id}`, { method: 'POST', body: form });
         if (res.ok) {
           const data = await res.json();
@@ -2397,13 +2420,17 @@ $('shareLine').addEventListener('click', async () => {
       console.error('Clipboard fallback failed:', clipErr);
     }
 
-    // 6) Last resort: download file
-    const a = document.createElement('a');
-    const blobUrl = URL.createObjectURL(file);
-    a.href = blobUrl;
-    a.download = file.name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    // 6) Last resort: download files
+    function downloadFile(file) {
+      const a = document.createElement('a');
+      const blobUrl = URL.createObjectURL(file);
+      a.href = blobUrl;
+      a.download = file.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    }
+    downloadFile(reportFile);
+    setTimeout(() => downloadFile(photosFile), 200);
     alert('อุปกรณ์นี้ไม่รองรับการแชร์โดยตรง ไฟล์ถูกดาวน์โหลดแล้ว กรุณาเปิดแอปแชร์แล้วเลือกภาพจากแกลเลอรี');
   } catch (err) {
     if (err.name === 'AbortError' || err.message === 'AbortError') return;
