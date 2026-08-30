@@ -2196,6 +2196,14 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
     throw new Error(`Element not renderable: ${el.id || 'unknown'} (hidden or zero size)`);
   }
   const clone = el.cloneNode(true);
+  clone.style.width = `${EXPORT_WIDTH}px`;
+  clone.style.height = `${EXPORT_HEIGHT}px`;
+  clone.style.minWidth = `${EXPORT_WIDTH}px`;
+  clone.style.minHeight = `${EXPORT_HEIGHT}px`;
+  clone.style.maxWidth = `${EXPORT_WIDTH}px`;
+  clone.style.maxHeight = `${EXPORT_HEIGHT}px`;
+  clone.style.overflow = 'hidden';
+  clone.style.position = 'relative';
   const host = document.createElement('div');
   host.setAttribute('aria-hidden', 'true');
   host.style.position = 'fixed';
@@ -2266,7 +2274,7 @@ function combineCanvases(c1, c2) {
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not get 2D context for combined canvas');
-  ctx.fillStyle = '#0a1628';
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
   ctx.drawImage(c1, 0, 0);
   ctx.drawImage(c2, 0, c1.height);
