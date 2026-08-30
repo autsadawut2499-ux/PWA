@@ -13,5 +13,10 @@
     { "source": "/manifest.json", "destination": "/manifest.json" },
     { "source": "/icon.svg", "destination": "/icon.svg" },
     { "source": "/:path*", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] },
+    { "source": "/(app\\.js|style\\.css|manifest\\.json)", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] },
+    { "source": "/", "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }] }
   ]
 }
