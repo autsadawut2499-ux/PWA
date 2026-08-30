@@ -1666,18 +1666,19 @@ button.small.full {
 }
 
 .ex-page {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: auto;
   min-height: 100vh;
   padding: 0;
   box-sizing: border-box;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background-size: 100% 100%;
   color: #111111;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Thai', sans-serif;
   font-size: 11px;
   line-height: 1.4;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -2104,10 +2105,11 @@ button.small.full {
   }
 
   .ex-page {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: auto;
     min-height: 100vh;
     padding: 0;
+    overflow: visible;
   }
 
   .ex-meta {

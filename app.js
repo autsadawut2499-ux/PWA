@@ -47,8 +47,8 @@ loadUsers();
 loadCurrentUser();
 
 const EXPORT_SCALE = Math.min(4, Math.max(1, window.devicePixelRatio || 1));
-const EXPORT_WIDTH = 390;
-const EXPORT_HEIGHT = 844;
+const EXPORT_WIDTH = window.innerWidth || 390;
+const EXPORT_HEIGHT = window.innerHeight || 844;
 
 function userKey(key) { return currentUser ? `u_${currentUser.id}_${key}` : key; }
 
@@ -2197,12 +2197,11 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
   }
   const clone = el.cloneNode(true);
   clone.style.width = `${EXPORT_WIDTH}px`;
-  clone.style.height = `${EXPORT_HEIGHT}px`;
   clone.style.minWidth = `${EXPORT_WIDTH}px`;
-  clone.style.minHeight = `${EXPORT_HEIGHT}px`;
   clone.style.maxWidth = `${EXPORT_WIDTH}px`;
-  clone.style.maxHeight = `${EXPORT_HEIGHT}px`;
-  clone.style.overflow = 'hidden';
+  clone.style.height = 'auto';
+  clone.style.minHeight = `${EXPORT_HEIGHT}px`;
+  clone.style.overflow = 'visible';
   clone.style.position = 'relative';
   const host = document.createElement('div');
   host.setAttribute('aria-hidden', 'true');
@@ -2210,10 +2209,10 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
   host.style.left = '0';
   host.style.top = '-9999px';
   host.style.width = `${EXPORT_WIDTH}px`;
-  host.style.height = `${EXPORT_HEIGHT}px`;
+  host.style.height = 'auto';
+  host.style.minHeight = `${EXPORT_HEIGHT}px`;
   host.style.maxWidth = `${EXPORT_WIDTH}px`;
-  host.style.maxHeight = `${EXPORT_HEIGHT}px`;
-  host.style.overflow = 'hidden';
+  host.style.overflow = 'visible';
   host.style.visibility = 'visible';
   host.style.opacity = '1';
   host.style.pointerEvents = 'none';
@@ -2222,6 +2221,7 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
   document.body.appendChild(host);
   await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
   await waitForImages(clone);
+  const contentHeight = clone.scrollHeight || EXPORT_HEIGHT;
   try {
     const canvas = await html2canvas(clone, {
       scale,
@@ -2229,7 +2229,7 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
       backgroundColor: null,
       logging: false,
       width: EXPORT_WIDTH,
-      height: EXPORT_HEIGHT,
+      height: contentHeight,
       windowWidth: EXPORT_WIDTH,
       windowHeight: EXPORT_HEIGHT,
       x: 0,
