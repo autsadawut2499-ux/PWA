@@ -241,36 +241,7 @@ button.full,
   accent-color: var(--primary);
 }
 
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-around;
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  padding: 6px 0;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  z-index: 50;
-  max-width: 540px;
-  margin: 0 auto;
-}
 
-.bottom-nav .nav-btn {
-  flex: 1;
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.75rem;
-  padding: 8px 4px;
-  border-radius: 0;
-  border: none;
-}
-
-.bottom-nav .nav-btn.active {
-  color: var(--primary);
-  font-weight: 700;
-}
 
 .menu-grid {
   display: grid;
@@ -516,17 +487,7 @@ button.small.full {
   font-size: 0.9rem;
 }
 
-.bottom-nav {
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  -webkit-overflow-scrolling: touch;
-}
 
-.bottom-nav .nav-btn {
-  flex: 0 0 auto;
-  min-width: 72px;
-  white-space: nowrap;
-}
 
 .milestone-list li {
   flex-direction: column;
@@ -1259,7 +1220,6 @@ button.small.full {
   }
   .app,
   header,
-  .bottom-nav,
   footer,
   .stack-form,
   #profileModal,
@@ -2029,21 +1989,8 @@ button.small.full {
     justify-content: flex-end;
   }
 
-  .bottom-nav {
-    padding: 8px 4px;
-    gap: 2px;
-  }
-
-  .bottom-nav .nav-btn {
-    padding: 6px 4px;
-    font-size: 0.65rem;
-    border-radius: 8px;
-    min-width: 0;
-    flex: 1 1 14%;
-  }
-
   main {
-    padding: 14px 12px 100px;
+    padding: 14px 12px 20px;
   }
 
   .view h2 {
@@ -2139,11 +2086,6 @@ button.small.full {
 }
 
 @media (max-width: 380px) {
-  .bottom-nav .nav-btn {
-    font-size: 0.6rem;
-    padding: 5px 2px;
-  }
-
   .ex-meta {
     grid-template-columns: 1fr 1fr;
   }
@@ -2155,5 +2097,65 @@ button.small.full {
 
   .ex-photos-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.install-banner {
+  background: #d4af37;
+  color: #000000;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 2px solid #b8972b;
+}
+
+.install-banner[hidden] {
+  display: none;
+}
+
+.install-banner-text strong {
+  display: block;
+  font-size: 1rem;
+  color: #000000;
+}
+
+.install-banner-text small {
+  display: block;
+  font-size: 0.8rem;
+  color: #000000;
+  margin-top: 2px;
+}
+
+.install-banner-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.install-accept {
+  background: #000000;
+  color: #d4af37;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.install-dismiss {
+  background: transparent;
+  color: #000000;
+  border: 1px solid #000000;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (min-width: 480px) {
+  .install-banner {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
 }

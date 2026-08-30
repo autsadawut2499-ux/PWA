@@ -220,7 +220,6 @@ const ADMIN_CODE = '501499';
 let adminGateTarget = null;
 
 const views = $$('.view');
-const navBtns = $$('.nav-btn');
 
 function showView(name) {
   if (name === 'admin' && sessionStorage.getItem('adminUnlocked') !== '1') {
@@ -229,13 +228,8 @@ function showView(name) {
     return;
   }
   views.forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
-  navBtns.forEach((b) => b.classList.toggle('active', b.dataset.view === name));
   if (name === 'history') renderHistory();
 }
-
-navBtns.forEach((btn) => {
-  btn.addEventListener('click', () => showView(btn.dataset.view));
-});
 
 function handleMenuGridClick(e) {
   const card = e.target.closest('.menu-card');
@@ -2050,21 +2044,49 @@ $('shareLine').addEventListener('click', async () => {
 });
 
 /* Install prompt */
-let deferredPrompt;
 const installBtn = $('installBtn');
+const installBanner = $('installBanner');
+const installAccept = $('installAccept');
+const installDismiss = $('installDismiss');
+
+function showInstallBanner() {
+  if (installBanner) installBanner.hidden = false;
+  if (installBtn) installBtn.hidden = false;
+}
+
+function hideInstallBanner() {
+  if (installBanner) installBanner.hidden = true;
+  if (installBtn) installBtn.hidden = true;
+}
+
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
-  deferredPrompt = e;
-  installBtn.hidden = false;
+  window.deferredPrompt = e;
+  showInstallBanner();
 });
 
-installBtn.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  installBtn.hidden = true;
-  deferredPrompt = null;
+async function runInstallPrompt() {
+  if (!window.deferredPrompt) return;
+  window.deferredPrompt.prompt();
+  await window.deferredPrompt.userChoice;
+  window.deferredPrompt = null;
+  hideInstallBanner();
+}
+
+if (installAccept) installAccept.addEventListener('click', runInstallPrompt);
+if (installBtn) installBtn.addEventListener('click', runInstallPrompt);
+if (installDismiss) installDismiss.addEventListener('click', hideInstallBanner);
+
+window.addEventListener('appinstalled', () => {
+  window.deferredPrompt = null;
+  hideInstallBanner();
 });
+
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  hideInstallBanner();
+} else if (window.deferredPrompt) {
+  showInstallBanner();
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {

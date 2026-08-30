@@ -12,6 +12,13 @@
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="style.css">
+  <script>
+    window.deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+    });
+  </script>
 </head>
 <body>
   <div id="authScreen" class="auth-screen">
@@ -52,6 +59,17 @@
         <button id="logoutBtn" class="small">ออกจากระบบ</button>
       </div>
     </header>
+
+    <div id="installBanner" class="install-banner" hidden>
+      <div class="install-banner-text">
+        <strong>ติดตั้งแอปบนอุปกรณ์</strong>
+        <small>เพิ่มไอคอนลงหน้าจอหลัก เพื่อเปิดใช้งานรวดเร็วขึ้น</small>
+      </div>
+      <div class="install-banner-actions">
+        <button id="installAccept" class="install-accept">ติดตั้งเลย</button>
+        <button id="installDismiss" class="install-dismiss">ปิด</button>
+      </div>
+    </div>
 
     <main id="main">
       <section id="view-menu" class="view active">
@@ -345,17 +363,6 @@
       </section>
     </main>
 
-    <nav class="bottom-nav">
-      <button data-view="menu" class="nav-btn active">☰ เมนู</button>
-      <button data-view="daily" class="nav-btn">รายงาน</button>
-      <button data-view="meeting" class="nav-btn">ประชุม</button>
-      <button data-view="checklist" class="nav-btn">เช็คลิสต์</button>
-      <button data-view="plans" class="nav-btn">แบบแปลน</button>
-      <button data-view="staff" class="nav-btn">ผู้ติดต่อ</button>
-      <button data-view="milestones" class="nav-btn">งวด</button>
-      <button data-view="history" class="nav-btn">ประวัติ</button>
-      <button data-view="admin" class="nav-btn">🔒 แอดมิน</button>
-    </nav>
 
     <footer>
       <button id="installBtn" hidden>ติดตั้งแอป</button>
