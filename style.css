@@ -1026,17 +1026,17 @@ button.small.full {
 }
 
 .export-page {
-  width: 595px;
-  min-height: 842px;
+  width: 100%;
+  max-width: 390px;
   margin: 0 auto 18px;
-  background: #fff;
+  background: transparent;
   color: #111;
-  padding: 36px 44px;
-  border: 1px solid #e5e5e5;
-  border-radius: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
   box-sizing: border-box;
-  page-break-after: always;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
 }
 
 .export-page:last-child {
@@ -1666,17 +1666,18 @@ button.small.full {
 }
 
 .ex-page {
-  width: 595px;
-  height: 842px;
-  padding: 34px 32px;
+  width: 100%;
+  min-height: 844px;
+  height: auto;
+  padding: 22px 18px;
   box-sizing: border-box;
-  background: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   color: #111111;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Thai', sans-serif;
   font-size: 11px;
   line-height: 1.4;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .ex-page::before {
@@ -2100,8 +2101,9 @@ button.small.full {
   }
 
   .ex-page {
-    width: 595px;
-    max-width: none;
+    width: 100%;
+    max-width: 390px;
+    padding: 22px 18px;
   }
 
   .filter-row {

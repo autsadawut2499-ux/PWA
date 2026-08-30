@@ -46,6 +46,10 @@ function saveCurrentUser() { saveGlobal('currentUser', currentUser); }
 loadUsers();
 loadCurrentUser();
 
+const EXPORT_SCALE = Math.min(4, Math.max(2, window.devicePixelRatio || 2));
+const EXPORT_WIDTH = 390;
+const EXPORT_HEIGHT = 844;
+
 function userKey(key) { return currentUser ? `u_${currentUser.id}_${key}` : key; }
 
 const API_BASE = location.hostname === 'localhost' ? 'http://localhost:8081/api' : '/api';
@@ -1987,7 +1991,7 @@ async function safeHtml2Canvas(el, scale = 2) {
   }
 }
 
-async function captureOffscreen(el, scale = 2) {
+async function captureOffscreen(el, scale = EXPORT_SCALE) {
   if (!el) throw new Error('No element provided for capture');
   if (!isElementRenderable(el)) {
     throw new Error(`Element not renderable: ${el.id || 'unknown'} (hidden or zero size)`);
@@ -1998,8 +2002,9 @@ async function captureOffscreen(el, scale = 2) {
   host.style.position = 'fixed';
   host.style.left = '0';
   host.style.top = '-9999px';
-  host.style.width = '595px';
-  host.style.height = '842px';
+  host.style.width = `${EXPORT_WIDTH}px`;
+  host.style.height = 'auto';
+  host.style.maxWidth = `${EXPORT_WIDTH}px`;
   host.style.overflow = 'visible';
   host.style.visibility = 'visible';
   host.style.opacity = '1';
@@ -2007,10 +2012,17 @@ async function captureOffscreen(el, scale = 2) {
   host.style.zIndex = '-9999';
   host.appendChild(clone);
   document.body.appendChild(host);
-  await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+  await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
   await waitForImages(clone);
   try {
-    const canvas = await html2canvas(clone, { scale, useCORS: true, backgroundColor: null, logging: false });
+    const canvas = await html2canvas(clone, {
+      scale,
+      useCORS: true,
+      backgroundColor: null,
+      logging: false,
+      width: EXPORT_WIDTH,
+      windowWidth: EXPORT_WIDTH
+    });
     if (!isCanvasValid(canvas)) throw new Error('html2canvas returned invalid canvas');
     return canvas;
   } catch (err) {
@@ -2034,7 +2046,7 @@ async function canvasToBlob(el, scale = 2) {
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 
-async function canvasToDataUrl(el, type = 'image/png', quality = 0.95, scale = 2) {
+async function canvasToDataUrl(el, type = 'image/png', quality = 0.95, scale = EXPORT_SCALE) {
   const canvas = await captureOffscreen(el, scale);
   if (!isCanvasValid(canvas)) throw new Error('Canvas invalid for toDataURL');
   return canvas.toDataURL(type, type === 'image/jpeg' ? quality : undefined);
@@ -2057,7 +2069,7 @@ function combineCanvases(c1, c2) {
   return canvas;
 }
 
-async function downloadCombinedImage(type, ext, quality = 0.95, scale = 2) {
+async function downloadCombinedImage(type, ext, quality = 0.95, scale = EXPORT_SCALE) {
   if (currentExportIndex === null) throw new Error('No report selected for export');
   if (typeof html2canvas !== 'function') throw new Error('html2canvas not loaded');
   const page1 = await captureOffscreen($('exportReport'), scale);
@@ -2070,7 +2082,7 @@ async function downloadCombinedImage(type, ext, quality = 0.95, scale = 2) {
   a.click();
 }
 
-async function shareCombinedImage(scale = 2) {
+async function shareCombinedImage(scale = EXPORT_SCALE) {
   if (currentExportIndex === null) throw new Error('No report selected for export');
   if (typeof html2canvas !== 'function') throw new Error('html2canvas not loaded');
   const page1 = await captureOffscreen($('exportReport'), scale);
@@ -2079,9 +2091,9 @@ async function shareCombinedImage(scale = 2) {
   return new Promise((resolve, reject) => {
     combined.toBlob((blob) => {
       if (!blob) return reject(new Error('Combined image toBlob returned null'));
-      const file = new File([blob], `daily-report-${dailyReports[currentExportIndex].date}.png`, { type: 'image/png' });
+      const file = new File([blob], `daily-report-${dailyReports[currentExportIndex].date}.jpg`, { type: 'image/jpeg' });
       resolve(file);
-    }, 'image/png');
+    }, 'image/jpeg', 0.92);
   });
 }
 
