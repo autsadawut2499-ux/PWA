@@ -47,8 +47,8 @@ loadUsers();
 loadCurrentUser();
 
 const EXPORT_SCALE = Math.min(4, Math.max(1, window.devicePixelRatio || 1));
-const EXPORT_WIDTH = window.innerWidth || 390;
-const EXPORT_HEIGHT = window.innerHeight || 844;
+const EXPORT_WIDTH = 390;
+const EXPORT_HEIGHT = 844;
 
 function userKey(key) { return currentUser ? `u_${currentUser.id}_${key}` : key; }
 

@@ -2110,6 +2110,15 @@ button.small.full {
     padding: 0;
   }
 
+  .ex-meta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ex-grid,
+  .ex-row-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .filter-row {
     overflow-x: auto;
     flex-wrap: nowrap;
