@@ -2094,6 +2094,14 @@ const installBtn = $('installBtn');
 const installBanner = $('installBanner');
 const installAccept = $('installAccept');
 const installDismiss = $('installDismiss');
+const installDismissed = localStorage.getItem('installBannerDismissed') === '1';
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.matchMedia('(display-mode: fullscreen)').matches ||
+         (navigator.standalone === true) ||
+         installDismissed;
+}
 
 function showInstallBanner() {
   if (installBanner) installBanner.hidden = false;
@@ -2112,26 +2120,40 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 async function runInstallPrompt() {
-  if (!window.deferredPrompt) return;
-  window.deferredPrompt.prompt();
-  await window.deferredPrompt.userChoice;
-  window.deferredPrompt = null;
+  if (window.deferredPrompt) {
+    window.deferredPrompt.prompt();
+    await window.deferredPrompt.userChoice;
+    window.deferredPrompt = null;
+    hideInstallBanner();
+  } else {
+    const ua = navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(ua);
+    const msg = isIOS
+      ? 'สำหรับ iPhone/iPad: เปิด Safari แล้วกดปุ่ม แชร์ ด้านล่าง แล้วเลือก "เพิ่มลงหน้าจอโฮม"'
+      : 'สำหรับ Android: เปิด Chrome แล้วกด ⋮ มุมบนขวา แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มลงหน้าจอหลัก"';
+    alert('ไม่สามารถแสดงป๊อปอัปติดตั้งได้\n' + msg);
+  }
+}
+
+function dismissInstallBanner() {
+  localStorage.setItem('installBannerDismissed', '1');
   hideInstallBanner();
 }
 
 if (installAccept) installAccept.addEventListener('click', runInstallPrompt);
 if (installBtn) installBtn.addEventListener('click', runInstallPrompt);
-if (installDismiss) installDismiss.addEventListener('click', hideInstallBanner);
+if (installDismiss) installDismiss.addEventListener('click', dismissInstallBanner);
 
 window.addEventListener('appinstalled', () => {
   window.deferredPrompt = null;
+  localStorage.setItem('installBannerDismissed', '1');
   hideInstallBanner();
 });
 
-if (window.matchMedia('(display-mode: standalone)').matches) {
-  hideInstallBanner();
-} else if (window.deferredPrompt) {
+if (!isStandalone()) {
   showInstallBanner();
+} else {
+  hideInstallBanner();
 }
 
 if ('serviceWorker' in navigator) {
