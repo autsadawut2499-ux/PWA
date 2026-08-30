@@ -1696,6 +1696,18 @@ button.small.full {
   pointer-events: none;
 }
 
+/* Banking slip style */
+.ex-slip {
+  background: #ffffff;
+  justify-content: flex-start;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.ex-slip::before {
+  display: none;
+}
+
 .ex-header {
   display: flex;
   justify-content: space-between;
@@ -1910,6 +1922,87 @@ button.small.full {
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: 6px;
+}
+
+/* Banking slip overrides */
+.ex-slip .ex-header {
+  background: #f1f5f9;
+  border-radius: 0;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid #1e3a5f;
+}
+
+.ex-slip .ex-logo {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.ex-slip .ex-company {
+  font-size: 13px;
+}
+
+.ex-slip .ex-doc-main {
+  font-size: 16px;
+}
+
+.ex-slip .ex-meta,
+.ex-slip .ex-meta.phase-meta {
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ex-slip .ex-meta-box {
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.ex-slip .ex-meta-box span {
+  padding: 3px 6px;
+  font-size: 8px;
+}
+
+.ex-slip .ex-meta-box b {
+  padding: 4px 6px;
+  font-size: 10px;
+  min-height: 0;
+}
+
+.ex-slip .ex-body {
+  gap: 6px;
+}
+
+.ex-slip .ex-card {
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.ex-slip .ex-card-head {
+  padding: 5px 10px;
+  font-size: 9.5px;
+}
+
+.ex-slip .ex-card > .ex-table,
+.ex-slip .ex-card > .ex-text,
+.ex-slip .ex-card > .ex-empty {
+  padding: 5px 10px;
+}
+
+.ex-slip .ex-text {
+  font-size: 10px;
+  line-height: 1.35;
+  min-height: 0;
+  background: #ffffff;
+}
+
+.ex-slip .ex-table th,
+.ex-slip .ex-table td {
+  padding: 4px 6px;
+  font-size: 9.5px;
 }
 
 .ex-photos-grid {

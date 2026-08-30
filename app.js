@@ -47,8 +47,8 @@ loadUsers();
 loadCurrentUser();
 
 const EXPORT_SCALE = Math.min(4, Math.max(2, (window.devicePixelRatio || 1) * 2));
-const EXPORT_WIDTH = window.innerWidth || 390;
-const EXPORT_HEIGHT = window.innerHeight || 844;
+const EXPORT_WIDTH = 400;
+const EXPORT_HEIGHT = 844;
 
 function userKey(key) { return currentUser ? `u_${currentUser.id}_${key}` : key; }
 
@@ -2006,7 +2006,7 @@ function populateExportData(i) {
     : '-';
 
   $('exportReport').innerHTML = `
-    <div class="ex-page ex-navy">
+    <div class="ex-page ex-slip">
       <div class="ex-header">
         <div class="ex-brand">
           <div class="ex-logo">WD</div>
