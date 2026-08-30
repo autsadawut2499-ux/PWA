@@ -919,13 +919,19 @@ function renderInspectionCategories() {
   });
 }
 
-function openInspection(subId) {
+function openSubPdf(subId) {
   const sub = subById(subId);
   if (!sub) return;
-  currentSubId = subId;
-  $('inspectionTitle').textContent = sub.label;
-  renderInspection(sub);
-  $('inspectionModal').hidden = false;
+  const cat = INSP_CATEGORIES.find((c) => c.subs.some((s) => s.id === sub.id));
+  let docs = (adminDocCache || []).filter((d) => d.subId === sub.id && !d.taskId);
+  if (!docs.length && cat) {
+    docs = (adminDocCache || []).filter((d) => d.categoryId === cat.id && !d.subId && !d.taskId);
+  }
+  if (!docs.length) {
+    alert('ยังไม่มีเอกสารอ้างอิงสำหรับหัวข้อนี้');
+    return;
+  }
+  viewAdminDocById(docs[0].id);
 }
 
 function closeInspection() {
@@ -1000,7 +1006,7 @@ function renderInspectionHistory() {
 
 $('inspectionCategories').addEventListener('click', async (e) => {
   if (e.target.classList.contains('insp-sub')) {
-    openInspection(e.target.dataset.sub);
+    openSubPdf(e.target.dataset.sub);
   } else if (e.target.classList.contains('view-cat-doc')) {
     await viewAdminDocById(e.target.dataset.docid);
   }
