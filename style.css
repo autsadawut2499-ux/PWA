@@ -175,12 +175,20 @@ button.full,
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .card-list li > div:first-child {
-  flex: 1;
+  flex: 1 1 100%;
+  min-width: 0;
   word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.card-list li .actions {
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .card-list small {
@@ -193,6 +201,12 @@ button.full,
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  flex: 1 1 auto;
+  white-space: normal;
 }
 
 .del {
@@ -359,19 +373,22 @@ header button.small {
 
 .progress-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  align-items: stretch;
+  align-items: center;
   margin-bottom: 8px;
 }
 
 .progress-row .progress-percent {
   width: 70px;
+  min-width: 0;
   text-align: center;
   flex: 0 0 auto;
 }
 
 .progress-row select {
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .manpower {
@@ -865,7 +882,8 @@ button.small.full {
 }
 
 .mp-row select {
-  flex: 2 1 160px;
+  flex: 2 1 120px;
+  min-width: 0;
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -875,7 +893,8 @@ button.small.full {
 }
 
 .mp-row input[type="number"] {
-  flex: 1 1 80px;
+  flex: 1 1 60px;
+  min-width: 0;
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -2163,4 +2182,69 @@ button.small.full {
     justify-content: space-between;
     align-items: center;
   }
+}
+
+/* Mobile-first responsive safety */
+html, body {
+  overflow-x: hidden;
+}
+
+img, svg, canvas, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+.stack-form input,
+.stack-form textarea,
+.stack-form select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+button,
+.btn {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.header-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.export-table,
+.ex-table {
+  table-layout: fixed;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.export-table th,
+.export-table td,
+.ex-table th,
+.ex-table td {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+* {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 380px) {
+  html { font-size: 14px; }
+  header h1 { font-size: 1.35rem; }
+  header h1 span { font-size: 0.6rem; }
+  .view h2 { font-size: 1.05rem; }
+  .menu-label { font-size: 0.95rem; }
+  .menu-desc { font-size: 0.8rem; }
+  .app { padding: 16px 12px 20px; }
+  .modal-card { padding: 16px; }
+}
+
+@media (max-width: 640px) {
 }
