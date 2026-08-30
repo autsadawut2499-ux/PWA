@@ -1027,13 +1027,13 @@ button.small.full {
 
 .export-page {
   width: 100%;
-  max-width: 390px;
+  max-width: 100%;
   margin: 0 auto 18px;
   background: transparent;
   color: #111;
   padding: 0;
   border: none;
-  border-radius: 16px;
+  border-radius: 0;
   box-sizing: border-box;
   box-shadow: 0 16px 40px rgba(0,0,0,0.2);
   overflow: hidden;
@@ -1666,10 +1666,10 @@ button.small.full {
 }
 
 .ex-page {
-  width: 100%;
-  min-height: 844px;
-  height: auto;
-  padding: 22px 18px;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  padding: 0;
   box-sizing: border-box;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   color: #111111;
@@ -1677,7 +1677,10 @@ button.small.full {
   font-size: 11px;
   line-height: 1.4;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .ex-page::before {
@@ -2101,9 +2104,10 @@ button.small.full {
   }
 
   .ex-page {
-    width: 100%;
-    max-width: 390px;
-    padding: 22px 18px;
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    padding: 0;
   }
 
   .filter-row {

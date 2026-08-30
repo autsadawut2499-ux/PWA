@@ -46,9 +46,9 @@ function saveCurrentUser() { saveGlobal('currentUser', currentUser); }
 loadUsers();
 loadCurrentUser();
 
-const EXPORT_SCALE = Math.min(4, Math.max(2, window.devicePixelRatio || 2));
-const EXPORT_WIDTH = 390;
-const EXPORT_HEIGHT = 844;
+const EXPORT_SCALE = Math.min(4, Math.max(1, window.devicePixelRatio || 1));
+const EXPORT_WIDTH = window.innerWidth || 390;
+const EXPORT_HEIGHT = window.innerHeight || 844;
 
 function userKey(key) { return currentUser ? `u_${currentUser.id}_${key}` : key; }
 
@@ -2202,9 +2202,10 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
   host.style.left = '0';
   host.style.top = '-9999px';
   host.style.width = `${EXPORT_WIDTH}px`;
-  host.style.height = 'auto';
+  host.style.height = `${EXPORT_HEIGHT}px`;
   host.style.maxWidth = `${EXPORT_WIDTH}px`;
-  host.style.overflow = 'visible';
+  host.style.maxHeight = `${EXPORT_HEIGHT}px`;
+  host.style.overflow = 'hidden';
   host.style.visibility = 'visible';
   host.style.opacity = '1';
   host.style.pointerEvents = 'none';
@@ -2220,7 +2221,11 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
       backgroundColor: null,
       logging: false,
       width: EXPORT_WIDTH,
-      windowWidth: EXPORT_WIDTH
+      height: EXPORT_HEIGHT,
+      windowWidth: EXPORT_WIDTH,
+      windowHeight: EXPORT_HEIGHT,
+      x: 0,
+      y: 0
     });
     if (!isCanvasValid(canvas)) throw new Error('html2canvas returned invalid canvas');
     return canvas;
