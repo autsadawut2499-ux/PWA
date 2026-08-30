@@ -2248,3 +2248,13 @@ button,
 
 @media (max-width: 640px) {
 }
+
+.empty-list {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px 12px;
+  font-style: italic;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}

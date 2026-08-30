@@ -480,6 +480,10 @@ $('dailyImagePreview').addEventListener('click', (e) => {
 function renderDaily() {
   const list = $('dailyList');
   list.innerHTML = '';
+  if (!dailyReports.length) {
+    list.innerHTML = '<li class="empty-list">ยังไม่มีรายงาน</li>';
+    return;
+  }
   dailyReports.forEach((r, i) => {
     const isMpArray = Array.isArray(r.mp);
     const total = isMpArray
@@ -588,6 +592,8 @@ $('dailyForm').addEventListener('submit', (e) => {
     dailyReports.unshift(report);
     save('dailyReports', dailyReports);
     renderDaily();
+    const newItem = $('dailyList').firstElementChild;
+    if (newItem) newItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
     $('dailyForm').reset();
     attachedImages = [];
     renderAttachedImages();
