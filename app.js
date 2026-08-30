@@ -221,6 +221,24 @@ let adminGateTarget = null;
 
 const views = $$('.view');
 
+const viewTitles = {
+  menu: 'เมนูหลัก',
+  daily: 'รายงานประจำวัน',
+  meeting: 'บันทึกประชุม',
+  checklist: 'เช็คลิสต์ตรวจงาน',
+  plans: 'แบบแปลน',
+  staff: 'ผู้ติดต่อ',
+  milestones: 'งวด / ตารางตรวจงาน',
+  houses: 'บ้าน / งวดงาน',
+  history: 'ประวัติการใช้งาน',
+  admin: 'จัดการระบบ (แอดมิน)'
+};
+
+function pushHistory(state) {
+  if (history.state && history.state.view === state.view && history.state.docId === state.docId && history.state.subId === state.subId) return;
+  history.pushState(state, '', '#' + (state.view === 'sub' ? 'sub-' + state.subId : state.view === 'pdf' ? 'pdf' : state.view));
+}
+
 function showView(name) {
   if (name === 'admin' && sessionStorage.getItem('adminUnlocked') !== '1') {
     adminGateTarget = 'admin';
@@ -228,6 +246,12 @@ function showView(name) {
     return;
   }
   views.forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
+  $('inspectionModal').hidden = true;
+  closePdf();
+  if ($('topTitle')) $('topTitle').textContent = viewTitles[name] || name;
+  if (!isPopping && history.state?.view !== name) {
+    pushHistory({ view: name });
+  }
   if (name === 'history') renderHistory();
 }
 
@@ -865,6 +889,7 @@ const INSP_CATEGORIES = [
 let inspectionState = load('inspectionState', {});
 let inspectionHistory = load('inspectionHistory', []);
 let currentSubId = null;
+let isPopping = false;
 
 function subById(subId) {
   for (const cat of INSP_CATEGORIES) {
@@ -919,24 +944,52 @@ function renderInspectionCategories() {
   });
 }
 
+function renderSubDetail(sub) {
+  const box = $('inspectionList');
+  if (!box) return;
+  box.innerHTML = subDocButtons(sub.id) || '';
+  sub.items.forEach((item) => {
+    const itemDocs = (adminDocCache || []).filter((d) => d.taskId === item.id);
+    const docBtn = itemDocs.length
+      ? `<button type="button" class="view-item-doc" data-itemid="${item.id}">📄 เอกสารอ้างอิง (${itemDocs.length})</button>`
+      : '';
+    box.innerHTML += `
+      <div class="foundation-item">
+        <div class="f-item-row">
+          <div class="f-item-label">${item.label}</div>
+          ${docBtn}
+        </div>
+      </div>
+    `;
+  });
+}
+
+function openSubDetail(subId, fromPop = false) {
+  const sub = subById(subId);
+  if (!sub) return;
+  currentSubId = subId;
+  $('inspectionTitle').textContent = sub.label;
+  renderSubDetail(sub);
+  if ($('saveInspection')) $('saveInspection').hidden = true;
+  $('inspectionModal').hidden = false;
+  if (!fromPop) {
+    pushHistory({ view: 'sub', subId: sub.id });
+  }
+  const subDocs = (adminDocCache || []).filter((d) => d.subId === sub.id && !d.taskId);
+  if (subDocs.length === 1 && !fromPop) {
+    viewAdminDocById(subDocs[0].id);
+  }
+}
+
 function openSubPdf(subId) {
   const sub = subById(subId);
   if (!sub) return;
-  const cat = INSP_CATEGORIES.find((c) => c.subs.some((s) => s.id === sub.id));
-  let docs = (adminDocCache || []).filter((d) => d.subId === sub.id && !d.taskId);
-  if (!docs.length && cat) {
-    docs = (adminDocCache || []).filter((d) => d.categoryId === cat.id && !d.subId && !d.taskId);
-  }
-  if (!docs.length) {
-    alert('ยังไม่มีเอกสารอ้างอิงสำหรับหัวข้อนี้');
-    return;
-  }
-  viewAdminDocById(docs[0].id);
+  showView('checklist');
+  openSubDetail(subId);
 }
 
 function closeInspection() {
-  $('inspectionModal').hidden = true;
-  currentSubId = null;
+  history.back();
 }
 
 function renderInspection(sub) {
@@ -1150,6 +1203,15 @@ async function renderPlans() {
 
 let currentPdfUrl;
 
+function closePdf() {
+  if ($('pdfModal')) $('pdfModal').hidden = true;
+  if ($('pdfEmbed')) $('pdfEmbed').src = '';
+  if (currentPdfUrl) {
+    URL.revokeObjectURL(currentPdfUrl);
+    currentPdfUrl = null;
+  }
+}
+
 $('planForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const file = $('planFile').files[0];
@@ -1199,9 +1261,7 @@ $('planList').addEventListener('click', async (e) => {
 });
 
 $('closePdf').addEventListener('click', () => {
-  $('pdfModal').hidden = true;
-  $('pdfEmbed').src = '';
-  if (currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
+  history.back();
 });
 
 /* Admin Panel */
@@ -1261,17 +1321,23 @@ async function renderAdminDocs() {
   }
 }
 
-async function viewAdminDocById(id) {
+async function viewAdminDocById(id, fromPop = false) {
   try {
     const docs = await getAdminDocs();
     const doc = docs.find((d) => d.id === Number(id));
     if (!doc || !doc.file) return;
-    if (currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
+    closePdf();
     const blob = new Blob([doc.file], { type: doc.type || 'application/pdf' });
     currentPdfUrl = URL.createObjectURL(blob);
     $('pdfEmbed').src = currentPdfUrl;
     $('pdfTitle').textContent = doc.title;
     $('pdfModal').hidden = false;
+    if (!fromPop) {
+      const state = { view: 'pdf', docId: Number(id) };
+      if (doc.subId) state.subId = doc.subId;
+      if (doc.categoryId) state.categoryId = doc.categoryId;
+      pushHistory(state);
+    }
   } catch (err) {
     console.error(err);
     alert('ไม่สามารถเปิดเอกสารได้');
@@ -2177,6 +2243,39 @@ window.addEventListener('appinstalled', () => {
   localStorage.setItem('installBannerDismissed', '1');
   hideInstallBanner();
 });
+
+function handlePop(e) {
+  const state = e.state || {};
+  if (!state.view) return;
+  isPopping = true;
+  if (state.view === 'pdf' && state.docId) {
+    if (state.subId) openSubDetail(state.subId, true);
+    else showView('checklist', true);
+    viewAdminDocById(Number(state.docId), true);
+  } else if (state.view === 'sub' && state.subId) {
+    showView('checklist', true);
+    openSubDetail(state.subId, true);
+  } else {
+    showView(state.view, true);
+  }
+  isPopping = false;
+}
+
+window.addEventListener('popstate', handlePop);
+
+if ($('navBack')) {
+  $('navBack').addEventListener('click', () => history.back());
+}
+if ($('navForward')) {
+  $('navForward').addEventListener('click', () => history.forward());
+}
+
+if (history.state && history.state.view) {
+  handlePop({ state: history.state });
+} else {
+  history.replaceState({ view: 'menu' }, '', '#menu');
+  showView('menu');
+}
 
 if (!isStandalone()) {
   showInstallBanner();

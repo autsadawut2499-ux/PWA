@@ -44,6 +44,31 @@ header {
   margin-bottom: 18px;
 }
 
+.top-arrows {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 6px 0;
+}
+
+.nav-arrow {
+  background: var(--card);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  min-width: 44px;
+}
+
+.top-title {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.95rem;
+}
+
 header h1 {
   margin: 0;
   color: var(--primary);
