@@ -2024,22 +2024,68 @@ $('exportPdf').addEventListener('click', async () => {
 });
 
 $('shareLine').addEventListener('click', async () => {
+  const title = 'รายงานประจำวัน';
+  const text = 'รายงานประจำวัน WD Construction Khon Kaen';
   try {
     const file = await shareCombinedImage();
+
+    // 1) Native file share (best for LINE)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'รายงานประจำวัน', text: 'รายงานประจำวัน WD Construction Khon Kaen' });
-      console.log('LINE share completed via Web Share');
-    } else {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(file);
-      a.download = file.name;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      alert('อุปกรณ์นี้ไม่รองรับการแชร์ไฟล์โดยตรง ไฟล์รูปถูกดาวน์โหลดแล้ว กรุณาเปิด LINE และเลือกภาพเพื่อส่งต่อ');
+      await navigator.share({ files: [file], title, text });
+      return;
     }
+
+    // 2) Plain text share for browsers without file sharing
+    if (navigator.share && !navigator.canShare) {
+      await navigator.share({ title, text });
+      return;
+    }
+
+    // 3) Upload to get a public link, then share/copy
+    let url = null;
+    if (currentUser && currentUser.id) {
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch(`${API_BASE}/upload/${currentUser.id}`, { method: 'POST', body: form });
+        if (res.ok) {
+          const data = await res.json();
+          url = data.file && data.file.url ? data.file.url : null;
+        }
+      } catch (uploadErr) {
+        console.error('Upload fallback failed:', uploadErr);
+      }
+    }
+
+    const shareText = url ? `${text}\n${url}` : text;
+
+    // 4) Share text or link if supported
+    if (navigator.share) {
+      await navigator.share({ title, text: shareText });
+      return;
+    }
+
+    // 5) Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(shareText);
+      alert(url ? 'คัดลอกลิงก์รายงานแล้ว กรุณาวางลงในแอปแชร์' : 'คัดลอกข้อความรายงานแล้ว กรุณาวางลงในแอปแชร์');
+      return;
+    } catch (clipErr) {
+      console.error('Clipboard fallback failed:', clipErr);
+    }
+
+    // 6) Last resort: download file
+    const a = document.createElement('a');
+    const blobUrl = URL.createObjectURL(file);
+    a.href = blobUrl;
+    a.download = file.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    alert('อุปกรณ์นี้ไม่รองรับการแชร์โดยตรง ไฟล์ถูกดาวน์โหลดแล้ว กรุณาเปิดแอปแชร์แล้วเลือกภาพจากแกลเลอรี');
   } catch (err) {
+    if (err.name === 'AbortError' || err.message === 'AbortError') return;
     console.error('LINE share failed:', err);
-    alert('ไม่สามารถแชร์ไป LINE ได้: ' + err.message);
+    alert('ไม่สามารถแชร์ได้: ' + err.message);
   }
 });
 
