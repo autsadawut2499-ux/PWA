@@ -1,4 +1,4 @@
-const CACHE_NAME = 'site-mgr-v96';
+const CACHE_NAME = 'site-mgr-v97';
 const ASSETS = [
   './',
   './index.html',
