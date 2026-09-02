@@ -114,6 +114,8 @@ async function initDb() {
       notes TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    ALTER TABLE purchase_requisitions ADD COLUMN IF NOT EXISTS items JSONB DEFAULT '[]';
   `);
 }
 
@@ -281,11 +283,13 @@ app.get('/api/pr/:userId', async (req, res) => {
 
 app.post('/api/pr/:userId', async (req, res) => {
   try {
-    const { siteName, itemName, quantity, unit, requiredDate, status, notes } = req.body;
+    const { siteName, items, requiredDate, status, notes } = req.body;
+    const itemList = Array.isArray(items) ? items : [];
+    const first = itemList[0] || {};
     const result = await pool.query(
-      `INSERT INTO purchase_requisitions (user_id, site_name, item_name, quantity, unit, required_date, status, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [req.params.userId, siteName || '', itemName || '', Number(quantity) || 0, unit || '', requiredDate || '', status || 'รอจัดซื้อ', notes || '']
+      `INSERT INTO purchase_requisitions (user_id, site_name, item_name, quantity, unit, required_date, status, notes, items)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [req.params.userId, siteName || '', first.itemName || '', Number(first.quantity) || 0, first.unit || '', requiredDate || '', status || 'รอจัดซื้อ', notes || '', JSON.stringify(itemList)]
     );
     await logAction({ userId: req.params.userId, action: 'create', entity: 'purchase_requisition', entityId: String(result.rows[0].id), details: req.body });
     res.json({ pr: result.rows[0] });
@@ -296,10 +300,27 @@ app.post('/api/pr/:userId', async (req, res) => {
 
 app.patch('/api/pr/:userId/:id', async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, items } = req.body;
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    if (status !== undefined) { fields.push(`status = $${idx++}`); values.push(status); }
+    if (items !== undefined) {
+      fields.push(`items = $${idx++}`);
+      values.push(JSON.stringify(items));
+      const first = (Array.isArray(items) ? items : [])[0] || {};
+      fields.push(`item_name = $${idx++}`);
+      values.push(first.itemName || '');
+      fields.push(`quantity = $${idx++}`);
+      values.push(Number(first.quantity) || 0);
+      fields.push(`unit = $${idx++}`);
+      values.push(first.unit || '');
+    }
+    if (!fields.length) return res.status(400).json({ error: 'No fields to update' });
+    values.push(req.params.id, req.params.userId);
     const result = await pool.query(
-      'UPDATE purchase_requisitions SET status = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
-      [status, req.params.id, req.params.userId]
+      `UPDATE purchase_requisitions SET ${fields.join(', ')} WHERE id = $${idx++} AND user_id = $${idx++} RETURNING *`,
+      values
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Not found' });
     await logAction({ userId: req.params.userId, action: 'update', entity: 'purchase_requisition', entityId: req.params.id, details: req.body });

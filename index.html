@@ -204,12 +204,11 @@
         <form id="prForm" class="stack-form">
           <label class="field-label">ชื่อหน้างาน / Site</label>
           <input type="text" id="prSiteName" placeholder="เช่น กาญจนาภิเษก ทาวน์โฮม" required>
+
           <label class="field-label">รายการวัสดุ</label>
-          <input type="text" id="prItemName" placeholder="เช่น ปูนซีเมนต์, เหล็กข้ออ้อย 12 มม." required>
-          <label class="field-label">จำนวน</label>
-          <input type="number" id="prQuantity" placeholder="0" min="0" step="any" required>
-          <label class="field-label">หน่วยนับ</label>
-          <input type="text" id="prUnit" placeholder="เช่น กระสอบ, เมตร, ชิ้น" required>
+          <div id="prItems"></div>
+          <button type="button" id="addPrItem" class="small">+ เพิ่มรายการวัสดุ</button>
+
           <label class="field-label">วันที่ต้องการใช้</label>
           <input type="date" id="prRequiredDate" required>
           <label class="field-label">สถานะ</label>

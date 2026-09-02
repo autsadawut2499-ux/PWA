@@ -732,12 +732,14 @@ $('dailyList').addEventListener('click', async (e) => {
 let prs = [];
 
 function mapPR(row) {
+  let items = Array.isArray(row.items) ? row.items : [];
+  if (!items.length && row.item_name) {
+    items = [{ itemName: row.item_name, quantity: Number(row.quantity) || 0, unit: row.unit }];
+  }
   return {
     id: row.id,
     siteName: row.site_name,
-    itemName: row.item_name,
-    quantity: Number(row.quantity) || 0,
-    unit: row.unit,
+    items,
     requiredDate: row.required_date,
     status: row.status,
     notes: row.notes,
@@ -787,6 +789,51 @@ async function deletePR(id) {
   if (!res.ok) throw new Error(`Server error ${res.status}`);
 }
 
+function prItemRowHTML(idx = 0, item = {}) {
+  return `
+    <div class="pr-item-row" data-pr-idx="${idx}">
+      <input type="text" class="pr-item-name" placeholder="รายการวัสดุ" value="${escapeHtml(item.itemName || '')}" required>
+      <input type="number" class="pr-item-qty" placeholder="จำนวน" min="0" step="any" value="${item.quantity || ''}" required>
+      <input type="text" class="pr-item-unit" placeholder="หน่วย" value="${escapeHtml(item.unit || '')}" required>
+      <button type="button" class="remove-pr-item del" aria-label="ลบรายการ">×</button>
+    </div>
+  `;
+}
+
+function renderPrItems() {
+  const box = $('prItems');
+  const rows = box.querySelectorAll('.pr-item-row');
+  const data = collectPrItems();
+  if (data.length === 0) data.push({});
+  box.innerHTML = data.map((it, i) => prItemRowHTML(i, it)).join('');
+}
+
+function collectPrItems() {
+  const rows = $$('#prItems .pr-item-row');
+  return Array.from(rows).map((row) => ({
+    itemName: row.querySelector('.pr-item-name').value.trim(),
+    quantity: Number(row.querySelector('.pr-item-qty').value) || 0,
+    unit: row.querySelector('.pr-item-unit').value.trim()
+  })).filter((it) => it.itemName);
+}
+
+$('addPrItem').addEventListener('click', () => {
+  const box = $('prItems');
+  const idx = box.querySelectorAll('.pr-item-row').length;
+  const div = document.createElement('div');
+  div.innerHTML = prItemRowHTML(idx);
+  box.appendChild(div.firstElementChild);
+});
+
+$('prItems').addEventListener('click', (e) => {
+  if (e.target.classList.contains('remove-pr-item')) {
+    e.target.closest('.pr-item-row').remove();
+    if (!$('#prItems .pr-item-row')) {
+      $('prItems').innerHTML = prItemRowHTML(0);
+    }
+  }
+});
+
 function renderPR() {
   const list = $('prList');
   list.innerHTML = '';
@@ -795,11 +842,12 @@ function renderPR() {
     return;
   }
   prs.forEach((p, i) => {
+    const itemsText = p.items.map((it) => `${escapeHtml(it.itemName)} ${it.quantity} ${escapeHtml(it.unit)}`).join(', ');
     const li = document.createElement('li');
     li.innerHTML = `
       <div>
-        <strong>${escapeHtml(p.itemName)}</strong> — ${escapeHtml(p.siteName)}<br>
-        <small>จำนวน: <b>${p.quantity}</b> ${escapeHtml(p.unit)} | ต้องการใช้: ${p.requiredDate || '-'} | สถานะ: <b>${escapeHtml(p.status)}</b></small><br>
+        <strong>${escapeHtml(p.siteName)}</strong> — ${escapeHtml(itemsText)}<br>
+        <small>ต้องการใช้: ${p.requiredDate || '-'} | สถานะ: <b>${escapeHtml(p.status)}</b> | รายการ: ${p.items.length} รายการ</small><br>
         ${p.notes ? `<small>หมายเหตุ: ${escapeHtml(p.notes)}</small>` : ''}
       </div>
       <div class="actions">
@@ -809,6 +857,8 @@ function renderPR() {
           <option value="จัดส่งแล้ว" ${p.status === 'จัดส่งแล้ว' ? 'selected' : ''}>จัดส่งแล้ว</option>
           <option value="ยกเลิก" ${p.status === 'ยกเลิก' ? 'selected' : ''}>ยกเลิก</option>
         </select>
+        <button type="button" data-i="${i}" class="export-pr small" title="ดาวน์โหลดรูป">🖼️ บันทึกรูป</button>
+        <button type="button" data-i="${i}" class="share-pr small" title="แชร์รูป">📤 แชร์</button>
         <button data-i="${i}" class="del" aria-label="ลบ">×</button>
       </div>
     `;
@@ -816,27 +866,115 @@ function renderPR() {
   });
 }
 
+function formatPrItemsRows(items) {
+  return items.map((it, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(it.itemName)}</td>
+      <td style="text-align:right">${it.quantity}</td>
+      <td>${escapeHtml(it.unit)}</td>
+    </tr>
+  `).join('');
+}
+
+function buildPrExportHTML(p) {
+  const rows = formatPrItemsRows(p.items);
+  const totalQty = p.items.reduce((a, it) => a + Number(it.quantity), 0);
+  return `
+    <div class="ex-page pr-slip">
+      <div class="pr-slip-header">
+        <div class="pr-slip-logo">WD</div>
+        <div class="pr-slip-title">
+          <div class="pr-slip-main">ใบขอซื้อวัสดุ (PR)</div>
+          <div class="pr-slip-sub">WD Construction Khon Kaen</div>
+        </div>
+      </div>
+      <div class="pr-slip-meta">
+        <div><span>หน้างาน</span><b>${escapeHtml(p.siteName)}</b></div>
+        <div><span>วันที่ต้องการ</span><b>${p.requiredDate || '-'}</b></div>
+        <div><span>สถานะ</span><b>${escapeHtml(p.status)}</b></div>
+      </div>
+      <table class="pr-slip-table">
+        <thead><tr><th>#</th><th>รายการวัสดุ</th><th style="text-align:right">จำนวน</th><th>หน่วย</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${p.notes ? `<div class="pr-slip-notes"><strong>หมายเหตุ:</strong> ${escapeHtml(p.notes)}</div>` : ''}
+      <div class="pr-slip-footer">
+        <div>รวม ${p.items.length} รายการ</div>
+        <div>จำนวนรวม ${totalQty} หน่วย</div>
+      </div>
+    </div>
+  `;
+}
+
+async function capturePrImage(p) {
+  const host = document.createElement('div');
+  host.style.position = 'fixed';
+  host.style.left = '0';
+  host.style.top = '-9999px';
+  host.style.width = `${EXPORT_WIDTH}px`;
+  host.style.visibility = 'visible';
+  host.style.opacity = '1';
+  host.innerHTML = buildPrExportHTML(p);
+  document.body.appendChild(host);
+  try {
+    return await captureOffscreen(host, EXPORT_SCALE);
+  } finally {
+    document.body.removeChild(host);
+  }
+}
+
+async function downloadPrImage(i) {
+  const p = prs[i];
+  if (!p) throw new Error('ไม่พบใบขอซื้อ');
+  const canvas = await capturePrImage(p);
+  const dataUrl = canvas.toDataURL('image/png');
+  downloadDataUrl(dataUrl, `pr-${p.id}-${p.siteName}.png`);
+}
+
+async function sharePrImage(i) {
+  const p = prs[i];
+  if (!p) throw new Error('ไม่พบใบขอซื้อ');
+  const canvas = await capturePrImage(p);
+  const file = await canvasToFile(canvas, `pr-${p.id}-${p.siteName}.jpg`, 'image/jpeg', 0.92);
+  const title = `ใบขอซื้อวัสดุ ${p.siteName}`;
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({ files: [file], title, text: title });
+    return;
+  }
+  if (navigator.share) {
+    await navigator.share({ title, text: title });
+  } else {
+    alert('เบราว์เซอร์ไม่รองรับการแชร์ไฟล์');
+  }
+}
+
 $('prForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const submitBtn = $('prForm').querySelector('button[type="submit"]');
+  const items = collectPrItems();
+  if (!items.length) {
+    alert('กรุณาเพิ่มรายการวัสดุอย่างน้อย 1 รายการ');
+    return;
+  }
   submitBtn.disabled = true;
   const originalText = submitBtn.textContent;
   submitBtn.textContent = 'กำลังส่ง...';
   try {
-    const item = {
+    const pr = {
       siteName: $('prSiteName').value.trim(),
-      itemName: $('prItemName').value.trim(),
-      quantity: Number($('prQuantity').value) || 0,
-      unit: $('prUnit').value.trim(),
+      items,
       requiredDate: $('prRequiredDate').value,
       status: $('prStatus').value,
       notes: $('prNotes').value.trim()
     };
-    const saved = await savePR(item);
+    const saved = await savePR(pr);
     prs.unshift(saved);
     renderPR();
     $('prForm').reset();
     $('prStatus').value = 'รอจัดซื้อ';
+    renderPrItems();
+    $('prRequiredDate').value = '';
     alert('ส่งใบขอซื้อสำเร็จ');
   } catch (err) {
     console.error('prForm submit failed:', err);
@@ -865,8 +1003,12 @@ $('prList').addEventListener('change', async (e) => {
 });
 
 $('prList').addEventListener('click', async (e) => {
-  if (e.target.classList.contains('del')) {
-    const i = Number(e.target.dataset.i);
+  const i = Number(e.target.dataset.i);
+  if (e.target.classList.contains('export-pr')) {
+    try { await downloadPrImage(i); } catch (err) { alert('บันทึกรูปไม่สำเร็จ: ' + err.message); }
+  } else if (e.target.classList.contains('share-pr')) {
+    try { await sharePrImage(i); } catch (err) { alert('แชร์ไม่สำเร็จ: ' + err.message); }
+  } else if (e.target.classList.contains('del')) {
     const p = prs[i];
     if (!p || !confirm('ลบรายการนี้?')) return;
     try {
@@ -879,6 +1021,11 @@ $('prList').addEventListener('click', async (e) => {
     }
   }
 });
+
+if ($('prItems')) {
+  renderPrItems();
+  if ($('prRequiredDate')) $('prRequiredDate').value = '';
+}
 
 /* Comprehensive Site Inspection Checklist */
 const INSP_CATEGORIES = [

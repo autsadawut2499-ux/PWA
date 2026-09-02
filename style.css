@@ -2325,6 +2325,145 @@ button.small.full {
   }
 }
 
+/* PR dynamic items and export slip */
+.pr-item-row {
+  display: grid;
+  grid-template-columns: 2fr 80px 80px 36px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pr-item-row input {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+.pr-item-row .remove-pr-item {
+  padding: 8px;
+  line-height: 1;
+}
+
+#addPrItem {
+  margin-bottom: 12px;
+}
+
+.pr-slip {
+  background: #ffffff !important;
+  color: #111111 !important;
+  padding: 18px 14px !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+  min-height: auto !important;
+  height: auto !important;
+  max-width: 400px !important;
+  justify-content: flex-start !important;
+  display: block !important;
+}
+
+.pr-slip::before {
+  display: none !important;
+}
+
+.pr-slip-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #1e3a5f;
+  margin-bottom: 10px;
+}
+
+.pr-slip-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #1e3a5f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pr-slip-main {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+.pr-slip-sub {
+  font-size: 9px;
+  color: #64748b;
+}
+
+.pr-slip-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pr-slip-meta div {
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.pr-slip-meta span {
+  display: block;
+  font-size: 8px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.pr-slip-meta b {
+  display: block;
+  font-size: 11px;
+  color: #111111;
+  word-break: break-word;
+}
+
+.pr-slip-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+  font-size: 10px;
+}
+
+.pr-slip-table th,
+.pr-slip-table td {
+  border: 1px solid #e2e8f0;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.pr-slip-table th {
+  background: #e0f2fe;
+  color: #1e3a5f;
+  font-weight: 700;
+}
+
+.pr-slip-notes {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 10px;
+}
+
+.pr-slip-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  color: #1e3a5f;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+}
+
 /* Mobile-first responsive safety */
 html, body {
   overflow-x: hidden;
