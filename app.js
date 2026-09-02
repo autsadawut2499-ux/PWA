@@ -87,6 +87,7 @@ async function loadFromBackend() {
       localStorage.setItem(userKey(k), JSON.stringify(data[k]));
     });
     await loadDailyReports();
+    await loadPRs();
   } catch (err) {
     console.error('loadFromBackend failed:', err.message);
   }
@@ -154,7 +155,7 @@ function renderForCurrentUser() {
   if (!currentUser) return;
   applyProfile();
   renderDaily();
-  renderMeetings();
+  renderPR();
   renderInspectionCategories();
   renderInspectionHistory();
   renderStaff();
@@ -276,7 +277,7 @@ const views = $$('.view');
 const viewTitles = {
   menu: 'เมนูหลัก',
   daily: 'รายงานประจำวัน',
-  meeting: 'บันทึกประชุม',
+  pr: 'ใบขอซื้อวัสดุ (PR)',
   checklist: 'เช็คลิสต์ตรวจงาน',
   plans: 'แบบแปลน',
   staff: 'ผู้ติดต่อ',
@@ -727,45 +728,155 @@ $('dailyList').addEventListener('click', async (e) => {
   }
 });
 
-/* Meeting & Task Log */
-const meetings = load('meetings', []);
-$('meetingDate').value = today();
+/* Purchase Requisition (PR) */
+let prs = [];
 
-function renderMeetings() {
-  const list = $('meetingList');
+function mapPR(row) {
+  return {
+    id: row.id,
+    siteName: row.site_name,
+    itemName: row.item_name,
+    quantity: Number(row.quantity) || 0,
+    unit: row.unit,
+    requiredDate: row.required_date,
+    status: row.status,
+    notes: row.notes,
+    createdAt: row.created_at
+  };
+}
+
+async function loadPRs() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`${API_BASE}/pr/${currentUser.id}`);
+    const j = await res.json();
+    prs = (j.prs || []).map(mapPR).sort((a, b) => (b.id || 0) - (a.id || 0));
+  } catch (err) {
+    console.error('loadPRs failed:', err.message);
+    prs = [];
+  }
+}
+
+async function savePR(item) {
+  if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
+  const res = await fetch(`${API_BASE}/pr/${currentUser.id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(item)
+  });
+  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  const j = await res.json();
+  return mapPR(j.pr);
+}
+
+async function updatePRStatus(id, status) {
+  if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
+  const res = await fetch(`${API_BASE}/pr/${currentUser.id}/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  const j = await res.json();
+  return mapPR(j.pr);
+}
+
+async function deletePR(id) {
+  if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
+  const res = await fetch(`${API_BASE}/pr/${currentUser.id}/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`Server error ${res.status}`);
+}
+
+function renderPR() {
+  const list = $('prList');
   list.innerHTML = '';
-  meetings.forEach((m, i) => {
+  if (!prs.length) {
+    list.innerHTML = '<li class="empty">ยังไม่มีใบขอซื้อ</li>';
+    return;
+  }
+  prs.forEach((p, i) => {
     const li = document.createElement('li');
     li.innerHTML = `
       <div>
-        <strong>${m.date}</strong> — ${escapeHtml(m.topic)}<br>
-        <small>คำสั่ง: ${escapeHtml(m.decision)} | ผู้รับผิดชอบ: ${escapeHtml(m.responsible)}</small>
+        <strong>${escapeHtml(p.itemName)}</strong> — ${escapeHtml(p.siteName)}<br>
+        <small>จำนวน: <b>${p.quantity}</b> ${escapeHtml(p.unit)} | ต้องการใช้: ${p.requiredDate || '-'} | สถานะ: <b>${escapeHtml(p.status)}</b></small><br>
+        ${p.notes ? `<small>หมายเหตุ: ${escapeHtml(p.notes)}</small>` : ''}
       </div>
-      <button data-i="${i}" class="del" aria-label="ลบ">×</button>
+      <div class="actions">
+        <select data-prid="${p.id}" class="pr-status" aria-label="สถานะ">
+          <option value="รอจัดซื้อ" ${p.status === 'รอจัดซื้อ' ? 'selected' : ''}>รอจัดซื้อ</option>
+          <option value="ออก PO แล้ว" ${p.status === 'ออก PO แล้ว' ? 'selected' : ''}>ออก PO แล้ว</option>
+          <option value="จัดส่งแล้ว" ${p.status === 'จัดส่งแล้ว' ? 'selected' : ''}>จัดส่งแล้ว</option>
+          <option value="ยกเลิก" ${p.status === 'ยกเลิก' ? 'selected' : ''}>ยกเลิก</option>
+        </select>
+        <button data-i="${i}" class="del" aria-label="ลบ">×</button>
+      </div>
     `;
     list.appendChild(li);
   });
 }
 
-$('meetingForm').addEventListener('submit', (e) => {
+$('prForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  meetings.unshift({
-    date: $('meetingDate').value,
-    topic: $('meetingTopic').value.trim(),
-    decision: $('meetingDecision').value.trim(),
-    responsible: $('meetingResponsible').value.trim()
-  });
-  save('meetings', meetings);
-  renderMeetings();
-  $('meetingForm').reset();
-  $('meetingDate').value = today();
+  const submitBtn = $('prForm').querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'กำลังส่ง...';
+  try {
+    const item = {
+      siteName: $('prSiteName').value.trim(),
+      itemName: $('prItemName').value.trim(),
+      quantity: Number($('prQuantity').value) || 0,
+      unit: $('prUnit').value.trim(),
+      requiredDate: $('prRequiredDate').value,
+      status: $('prStatus').value,
+      notes: $('prNotes').value.trim()
+    };
+    const saved = await savePR(item);
+    prs.unshift(saved);
+    renderPR();
+    $('prForm').reset();
+    $('prStatus').value = 'รอจัดซื้อ';
+    alert('ส่งใบขอซื้อสำเร็จ');
+  } catch (err) {
+    console.error('prForm submit failed:', err);
+    alert('ส่งไม่สำเร็จ: ' + err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
 });
 
-$('meetingList').addEventListener('click', (e) => {
+$('prList').addEventListener('change', async (e) => {
+  if (e.target.classList.contains('pr-status')) {
+    const id = Number(e.target.dataset.prid);
+    const newStatus = e.target.value;
+    try {
+      await updatePRStatus(id, newStatus);
+      const p = prs.find((x) => x.id === id);
+      if (p) p.status = newStatus;
+      renderPR();
+      alert('อัปเดตสถานะสำเร็จ');
+    } catch (err) {
+      console.error('updatePRStatus failed:', err);
+      alert('อัปเดตสถานะไม่สำเร็จ: ' + err.message);
+    }
+  }
+});
+
+$('prList').addEventListener('click', async (e) => {
   if (e.target.classList.contains('del')) {
-    meetings.splice(Number(e.target.dataset.i), 1);
-    save('meetings', meetings);
-    renderMeetings();
+    const i = Number(e.target.dataset.i);
+    const p = prs[i];
+    if (!p || !confirm('ลบรายการนี้?')) return;
+    try {
+      await deletePR(p.id);
+      prs.splice(i, 1);
+      renderPR();
+    } catch (err) {
+      console.error('deletePR failed:', err);
+      alert('ลบไม่สำเร็จ: ' + err.message);
+    }
   }
 });
 
@@ -2668,7 +2779,7 @@ function actionLabel(a) {
 function entityLabel(e) {
   const map = {
     dailyReports: 'รายงานประจำวัน',
-    meetings: 'รายงานประชุม',
+    prs: 'ใบขอซื้อวัสดุ',
     staff: 'ผู้ติดต่อ',
     milestones: 'งวดงาน',
     inspectionHistory: 'เช็คลิสต์',

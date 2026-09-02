@@ -101,6 +101,19 @@ async function initDb() {
       details JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS purchase_requisitions (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT REFERENCES users(id),
+      site_name TEXT,
+      item_name TEXT,
+      quantity NUMERIC,
+      unit TEXT,
+      required_date TEXT,
+      status TEXT DEFAULT 'รอจัดซื้อ',
+      notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
 }
 
@@ -249,6 +262,58 @@ app.post('/api/reports/:userId', async (req, res) => {
     );
     await logAction({ userId: req.params.userId, action: 'create', entity: 'daily_report', entityId: String(result.rows[0].id), details: req.body });
     res.json({ report: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/pr/:userId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM purchase_requisitions WHERE user_id = $1 ORDER BY id DESC',
+      [req.params.userId]
+    );
+    res.json({ prs: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/pr/:userId', async (req, res) => {
+  try {
+    const { siteName, itemName, quantity, unit, requiredDate, status, notes } = req.body;
+    const result = await pool.query(
+      `INSERT INTO purchase_requisitions (user_id, site_name, item_name, quantity, unit, required_date, status, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [req.params.userId, siteName || '', itemName || '', Number(quantity) || 0, unit || '', requiredDate || '', status || 'รอจัดซื้อ', notes || '']
+    );
+    await logAction({ userId: req.params.userId, action: 'create', entity: 'purchase_requisition', entityId: String(result.rows[0].id), details: req.body });
+    res.json({ pr: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/pr/:userId/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const result = await pool.query(
+      'UPDATE purchase_requisitions SET status = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+      [status, req.params.id, req.params.userId]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Not found' });
+    await logAction({ userId: req.params.userId, action: 'update', entity: 'purchase_requisition', entityId: req.params.id, details: req.body });
+    res.json({ pr: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/pr/:userId/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM purchase_requisitions WHERE id = $1 AND user_id = $2', [req.params.id, req.params.userId]);
+    await logAction({ userId: req.params.userId, action: 'delete', entity: 'purchase_requisition', entityId: req.params.id });
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

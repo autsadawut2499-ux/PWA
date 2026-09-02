@@ -88,10 +88,10 @@
             <div class="menu-label">รายงานประจำวัน</div>
             <div class="menu-desc">บันทึกงาน กำลังคน สภาพอากาศ</div>
           </button>
-          <button type="button" class="menu-card" data-view="meeting">
-            <div class="menu-icon">🗒️</div>
-            <div class="menu-label">รายงานการประชุม</div>
-            <div class="menu-desc">บันทึกมติและคำสั่งงาน</div>
+          <button type="button" class="menu-card" data-view="pr">
+            <div class="menu-icon">�</div>
+            <div class="menu-label">ใบขอซื้อวัสดุ (PR)</div>
+            <div class="menu-desc">ส่งข้อมูลให้ฝ่ายจัดซื้อ</div>
           </button>
           <button type="button" class="menu-card" data-view="checklist">
             <div class="menu-icon">✅</div>
@@ -199,16 +199,31 @@
         <ul id="dailyList" class="card-list"></ul>
       </section>
 
-      <section id="view-meeting" class="view">
-        <h2>บันทึกประชุม / สั่งงาน</h2>
-        <form id="meetingForm" class="stack-form">
-          <input type="date" id="meetingDate" required>
-          <input type="text" id="meetingTopic" placeholder="หัวข้อประชุม/งาน" required>
-          <textarea id="meetingDecision" placeholder="มติ/คำสั่งหน้างาน" required></textarea>
-          <input type="text" id="meetingResponsible" placeholder="ผู้รับผิดชอบ" required>
-          <button type="submit">บันทึก</button>
+      <section id="view-pr" class="view">
+        <h2>ใบขอซื้อวัสดุ (PR)</h2>
+        <form id="prForm" class="stack-form">
+          <label class="field-label">ชื่อหน้างาน / Site</label>
+          <input type="text" id="prSiteName" placeholder="เช่น กาญจนาภิเษก ทาวน์โฮม" required>
+          <label class="field-label">รายการวัสดุ</label>
+          <input type="text" id="prItemName" placeholder="เช่น ปูนซีเมนต์, เหล็กข้ออ้อย 12 มม." required>
+          <label class="field-label">จำนวน</label>
+          <input type="number" id="prQuantity" placeholder="0" min="0" step="any" required>
+          <label class="field-label">หน่วยนับ</label>
+          <input type="text" id="prUnit" placeholder="เช่น กระสอบ, เมตร, ชิ้น" required>
+          <label class="field-label">วันที่ต้องการใช้</label>
+          <input type="date" id="prRequiredDate" required>
+          <label class="field-label">สถานะ</label>
+          <select id="prStatus">
+            <option value="รอจัดซื้อ" selected>รอจัดซื้อ</option>
+            <option value="ออก PO แล้ว">ออก PO แล้ว</option>
+            <option value="จัดส่งแล้ว">จัดส่งแล้ว</option>
+            <option value="ยกเลิก">ยกเลิก</option>
+          </select>
+          <label class="field-label">หมายเหตุ</label>
+          <textarea id="prNotes" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea>
+          <button type="submit">ส่งใบขอซื้อ</button>
         </form>
-        <ul id="meetingList" class="card-list"></ul>
+        <ul id="prList" class="card-list"></ul>
       </section>
 
       <section id="view-checklist" class="view">
@@ -320,7 +335,7 @@
         <div id="historyFilter" class="filter-row">
           <button type="button" class="filter-btn active" data-filter="all">ทั้งหมด</button>
           <button type="button" class="filter-btn" data-filter="dailyReports">รายงาน</button>
-          <button type="button" class="filter-btn" data-filter="meetings">ประชุม</button>
+          <button type="button" class="filter-btn" data-filter="prs">ใบขอซื้อ</button>
           <button type="button" class="filter-btn" data-filter="staff">ผู้ติดต่อ</button>
           <button type="button" class="filter-btn" data-filter="milestones">งวด</button>
           <button type="button" class="filter-btn" data-filter="inspectionHistory">เช็คลิสต์</button>
