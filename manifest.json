@@ -1,6 +1,6 @@
 {
-  "name": "Skynine",
-  "short_name": "Skynine",
+  "name": "WD Construction",
+  "short_name": "WD Construction",
   "description": "ระบบจัดการหน้างานก่อสร้าง WD Construction Khon Kaen",
   "start_url": "/",
   "display": "standalone",
@@ -9,9 +9,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ]

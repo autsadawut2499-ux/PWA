@@ -11,7 +11,7 @@
     { "source": "/app.js", "destination": "/app.js" },
     { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/manifest.json", "destination": "/manifest.json" },
-    { "source": "/icon.svg", "destination": "/icon.svg" },
+    { "source": "/icon.jpg", "destination": "/icon.jpg" },
     { "source": "/:path*", "destination": "/index.html" }
   ],
   "headers": [

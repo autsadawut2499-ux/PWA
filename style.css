@@ -2401,7 +2401,7 @@ button.small.full {
 .pr-slip-meta {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 10px;
 }
 
@@ -2454,9 +2454,30 @@ button.small.full {
   font-size: 10px;
 }
 
+.pr-slip-approval {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 14px 0 10px;
+  text-align: center;
+}
+
+.pr-approval-line {
+  border-bottom: 1px solid #94a3b8;
+  margin-bottom: 6px;
+  height: 30px;
+}
+
+.pr-approval-label {
+  font-size: 9px;
+  color: #475569;
+}
+
 .pr-slip-footer {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
   font-size: 10px;
   font-weight: 700;
   color: #1e3a5f;

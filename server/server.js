@@ -32,8 +32,8 @@ const bucketName = process.env.S3_BUCKET_NAME;
 const publicUrlBase = process.env.S3_PUBLIC_URL;
 
 async function initDb() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL,
@@ -42,9 +42,8 @@ async function initDb() {
       project TEXT,
       is_admin BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS daily_reports (
+    )`,
+    `CREATE TABLE IF NOT EXISTS daily_reports (
       id SERIAL PRIMARY KEY,
       user_id TEXT REFERENCES users(id),
       date TEXT,
@@ -64,16 +63,14 @@ async function initDb() {
       materials JSONB DEFAULT '[]',
       images JSONB DEFAULT '[]',
       created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS phase TEXT;
-    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS phase_finish TEXT;
-    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS progress_percent TEXT;
-    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS progress_type TEXT;
-    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS extra_materials TEXT;
-    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS notes TEXT;
-
-    CREATE TABLE IF NOT EXISTS files (
+    )`,
+    `ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS phase TEXT`,
+    `ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS phase_finish TEXT`,
+    `ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS progress_percent TEXT`,
+    `ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS progress_type TEXT`,
+    `ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS extra_materials TEXT`,
+    `ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS notes TEXT`,
+    `CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY,
       user_id TEXT REFERENCES users(id),
       original_name TEXT,
@@ -82,17 +79,15 @@ async function initDb() {
       category_id TEXT,
       url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS user_data (
+    )`,
+    `CREATE TABLE IF NOT EXISTS user_data (
       user_id TEXT NOT NULL,
       data_key TEXT NOT NULL,
       data JSONB DEFAULT '{}',
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       PRIMARY KEY (user_id, data_key)
-    );
-
-    CREATE TABLE IF NOT EXISTS activity_logs (
+    )`,
+    `CREATE TABLE IF NOT EXISTS activity_logs (
       id SERIAL PRIMARY KEY,
       user_id TEXT,
       action TEXT,
@@ -100,9 +95,8 @@ async function initDb() {
       entity_id TEXT,
       details JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS purchase_requisitions (
+    )`,
+    `CREATE TABLE IF NOT EXISTS purchase_requisitions (
       id SERIAL PRIMARY KEY,
       user_id TEXT REFERENCES users(id),
       site_name TEXT,
@@ -113,10 +107,16 @@ async function initDb() {
       status TEXT DEFAULT 'รอจัดซื้อ',
       notes TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    ALTER TABLE purchase_requisitions ADD COLUMN IF NOT EXISTS items JSONB DEFAULT '[]';
-  `);
+    )`,
+    `ALTER TABLE purchase_requisitions ADD COLUMN IF NOT EXISTS items JSONB DEFAULT '[]'`
+  ];
+  for (const sql of statements) {
+    try {
+      await pool.query(sql);
+    } catch (err) {
+      console.error('initDb statement failed:', sql, err.message);
+    }
+  }
 }
 
 async function checkS3() {

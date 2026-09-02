@@ -1,11 +1,11 @@
-const CACHE_NAME = 'site-mgr-v95';
+const CACHE_NAME = 'site-mgr-v96';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
   './manifest.json',
-  './icon.svg'
+  './icon.jpg'
 ];
 
 self.addEventListener('install', (event) => {

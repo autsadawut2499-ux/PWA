@@ -759,6 +759,15 @@ async function loadPRs() {
   }
 }
 
+async function parseServerError(res) {
+  try {
+    const j = await res.json();
+    return j.error || `Server error ${res.status}`;
+  } catch (e) {
+    return `Server error ${res.status}`;
+  }
+}
+
 async function savePR(item) {
   if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
   const res = await fetch(`${API_BASE}/pr/${currentUser.id}`, {
@@ -766,7 +775,7 @@ async function savePR(item) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(item)
   });
-  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  if (!res.ok) throw new Error(await parseServerError(res));
   const j = await res.json();
   return mapPR(j.pr);
 }
@@ -778,7 +787,7 @@ async function updatePRStatus(id, status) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status })
   });
-  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  if (!res.ok) throw new Error(await parseServerError(res));
   const j = await res.json();
   return mapPR(j.pr);
 }
@@ -786,7 +795,7 @@ async function updatePRStatus(id, status) {
 async function deletePR(id) {
   if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
   const res = await fetch(`${API_BASE}/pr/${currentUser.id}/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  if (!res.ok) throw new Error(await parseServerError(res));
 }
 
 function prItemRowHTML(idx = 0, item = {}) {
@@ -880,6 +889,9 @@ function formatPrItemsRows(items) {
 function buildPrExportHTML(p) {
   const rows = formatPrItemsRows(p.items);
   const totalQty = p.items.reduce((a, it) => a + Number(it.quantity), 0);
+  const requester = currentUser ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() : 'ผู้ขอซื้อ';
+  const reqDate = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH');
+  const stamp = new Date().toLocaleString('th-TH');
   return `
     <div class="ex-page pr-slip">
       <div class="pr-slip-header">
@@ -891,6 +903,7 @@ function buildPrExportHTML(p) {
       </div>
       <div class="pr-slip-meta">
         <div><span>หน้างาน</span><b>${escapeHtml(p.siteName)}</b></div>
+        <div><span>วันที่ขอซื้อ</span><b>${reqDate}</b></div>
         <div><span>วันที่ต้องการ</span><b>${p.requiredDate || '-'}</b></div>
         <div><span>สถานะ</span><b>${escapeHtml(p.status)}</b></div>
       </div>
@@ -899,9 +912,19 @@ function buildPrExportHTML(p) {
         <tbody>${rows}</tbody>
       </table>
       ${p.notes ? `<div class="pr-slip-notes"><strong>หมายเหตุ:</strong> ${escapeHtml(p.notes)}</div>` : ''}
+      <div class="pr-slip-approval">
+        <div>
+          <div class="pr-approval-line"></div>
+          <div class="pr-approval-label">ผู้ขอซื้อ: ${escapeHtml(requester)}</div>
+        </div>
+        <div>
+          <div class="pr-approval-line"></div>
+          <div class="pr-approval-label">ผู้อนุมัติ</div>
+        </div>
+      </div>
       <div class="pr-slip-footer">
-        <div>รวม ${p.items.length} รายการ</div>
-        <div>จำนวนรวม ${totalQty} หน่วย</div>
+        <div>รวม ${p.items.length} รายการ / จำนวนรวม ${totalQty} หน่วย</div>
+        <div>ออกเอกสาร ${stamp}</div>
       </div>
     </div>
   `;
@@ -2565,7 +2588,7 @@ async function captureOffscreen(el, scale = EXPORT_SCALE) {
       width: EXPORT_WIDTH,
       height: contentHeight,
       windowWidth: EXPORT_WIDTH,
-      windowHeight: EXPORT_HEIGHT,
+      windowHeight: contentHeight,
       x: 0,
       y: 0
     });
