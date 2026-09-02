@@ -83,11 +83,59 @@ async function loadFromBackend() {
     const j = await res.json();
     const data = j.data || {};
     Object.keys(data).forEach((k) => {
+      if (k === 'dailyReports') return;
       localStorage.setItem(userKey(k), JSON.stringify(data[k]));
     });
+    await loadDailyReports();
   } catch (err) {
     console.error('loadFromBackend failed:', err.message);
   }
+}
+
+function mapReport(row) {
+  return {
+    id: row.id,
+    date: row.date,
+    foreman: row.foreman,
+    project: row.project,
+    phase: row.phase,
+    phaseFinish: row.phase_finish,
+    progressPercent: row.progress_percent,
+    progressType: row.progress_type,
+    work: row.work,
+    plan: row.plan,
+    weather: row.weather,
+    issue: row.issue,
+    extraMaterials: row.extra_materials,
+    notes: row.notes,
+    mp: row.mp,
+    materials: row.materials,
+    images: Array.isArray(row.images) ? row.images : []
+  };
+}
+
+async function loadDailyReports() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`${API_BASE}/reports/${currentUser.id}`);
+    const j = await res.json();
+    dailyReports = (j.reports || []).map(mapReport).sort((a, b) => (b.id || 0) - (a.id || 0));
+  } catch (err) {
+    console.error('loadDailyReports failed:', err.message);
+    dailyReports = [];
+  }
+}
+
+async function saveDailyReport(report) {
+  if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
+  const res = await fetch(`${API_BASE}/reports/${currentUser.id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(report)
+  });
+  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  const j = await res.json();
+  return mapReport(j.report);
 }
 
 function sanitizePhone(p) { return p.replace(/\D/g, ''); }
@@ -370,7 +418,7 @@ $('profileForm').addEventListener('submit', (e) => {
 });
 
 /* Daily Report */
-const dailyReports = load('dailyReports', []);
+let dailyReports = [];
 let attachedImages = [];
 
 $('dailyDate').value = today();
@@ -479,6 +527,17 @@ function renderAttachedImages() {
   });
 }
 
+async function uploadFileToR2(file, categoryId = '') {
+  if (!currentUser) throw new Error('กรุณาเข้าสู่ระบบ');
+  const form = new FormData();
+  form.append('file', file);
+  if (categoryId) form.append('categoryId', categoryId);
+  const res = await fetch(`${API_BASE}/upload/${currentUser.id}`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  const j = await res.json();
+  return j.file && j.file.url ? j.file.url : null;
+}
+
 $('dailyImage').addEventListener('change', async (e) => {
   const files = Array.from(e.target.files);
   if (attachedImages.length + files.length > 6) {
@@ -488,10 +547,11 @@ $('dailyImage').addEventListener('change', async (e) => {
   }
   for (const file of files) {
     try {
-      const dataUrl = await resizeImage(file);
-      attachedImages.push(dataUrl);
+      const url = await uploadFileToR2(file);
+      if (url) attachedImages.push(url);
     } catch (err) {
-      alert('ไม่สามารถโหลดรูปได้');
+      console.error('Upload image failed:', err);
+      alert('ไม่สามารถอัปโหลดรูปได้: ' + err.message);
     }
   }
   e.target.value = '';
@@ -593,13 +653,17 @@ if ($('loadDemo')) {
   $('loadDemo').addEventListener('click', fillDemoData);
 }
 
-$('dailyForm').addEventListener('submit', (e) => {
+$('dailyForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const submitBtn = $('dailyForm').querySelector('button[type="submit"]');
+  if (!$('dailyWeather').value) {
+    alert('กรุณาเลือกสภาพอากาศ');
+    return;
+  }
+  submitBtn.disabled = true;
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'กำลังบันทึก...';
   try {
-    if (!$('dailyWeather').value) {
-      alert('กรุณาเลือกสภาพอากาศ');
-      return;
-    }
     const report = {
       date: $('dailyDate').value,
       foreman: $('dailyForeman').value.trim(),
@@ -617,8 +681,8 @@ $('dailyForm').addEventListener('submit', (e) => {
       notes: $('dailyNotes').value.trim(),
       images: attachedImages
     };
-    dailyReports.unshift(report);
-    save('dailyReports', dailyReports);
+    const saved = await saveDailyReport(report);
+    dailyReports.unshift(saved);
     renderDaily();
     const newItem = $('dailyList').firstElementChild;
     if (newItem) newItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -630,18 +694,30 @@ $('dailyForm').addEventListener('submit', (e) => {
     $('dailyWeather').value = '';
     manpowerRows = [];
     addManpowerRow();
-    console.log('Daily report saved:', report);
+    alert('บันทึกรายงานสำเร็จ');
+    console.log('Daily report saved:', saved);
   } catch (err) {
     console.error('dailyForm save failed:', err);
     alert('บันทึกไม่สำเร็จ: ' + err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
   }
 });
 
-$('dailyList').addEventListener('click', (e) => {
+$('dailyList').addEventListener('click', async (e) => {
   const i = Number(e.target.dataset.i);
   if (e.target.classList.contains('del')) {
+    const r = dailyReports[i];
+    if (!confirm('ลบรายงานนี้?')) return;
+    try {
+      if (r && r.id) {
+        await fetch(`${API_BASE}/reports/${currentUser.id}/${r.id}`, { method: 'DELETE' });
+      }
+    } catch (err) {
+      console.error('Delete report failed:', err);
+    }
     dailyReports.splice(i, 1);
-    save('dailyReports', dailyReports);
     renderDaily();
   } else if (e.target.classList.contains('export-report')) {
     openExport(i);

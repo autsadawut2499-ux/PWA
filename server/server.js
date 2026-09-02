@@ -50,15 +50,28 @@ async function initDb() {
       date TEXT,
       foreman TEXT,
       project TEXT,
+      phase TEXT,
+      phase_finish TEXT,
+      progress_percent TEXT,
+      progress_type TEXT,
       work TEXT,
       plan TEXT,
       weather TEXT,
       issue TEXT,
+      extra_materials TEXT,
+      notes TEXT,
       mp JSONB DEFAULT '[]',
       materials JSONB DEFAULT '[]',
       images JSONB DEFAULT '[]',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS phase TEXT;
+    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS phase_finish TEXT;
+    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS progress_percent TEXT;
+    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS progress_type TEXT;
+    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS extra_materials TEXT;
+    ALTER TABLE daily_reports ADD COLUMN IF NOT EXISTS notes TEXT;
 
     CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY,
@@ -227,13 +240,25 @@ app.get('/api/reports/:userId', async (req, res) => {
 
 app.post('/api/reports/:userId', async (req, res) => {
   try {
-    const { date, foreman, project, work, plan, weather, issue, mp, materials, images } = req.body;
+    const { date, foreman, project, phase, phaseFinish, progressPercent, progressType, work, plan, weather, issue, extraMaterials, notes, mp, materials, images } = req.body;
     const result = await pool.query(
-      `INSERT INTO daily_reports (user_id, date, foreman, project, work, plan, weather, issue, mp, materials, images)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-      [req.params.userId, date, foreman, project, work, plan, weather, issue, JSON.stringify(mp || []), JSON.stringify(materials || []), JSON.stringify(images || [])]
+      `INSERT INTO daily_reports
+       (user_id, date, foreman, project, phase, phase_finish, progress_percent, progress_type, work, plan, weather, issue, extra_materials, notes, mp, materials, images)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      [req.params.userId, date, foreman, project, phase || '', phaseFinish || '', progressPercent || '', progressType || '', work, plan, weather, issue, extraMaterials || '', notes || '', JSON.stringify(mp || []), JSON.stringify(materials || []), JSON.stringify(images || [])]
     );
+    await logAction({ userId: req.params.userId, action: 'create', entity: 'daily_report', entityId: String(result.rows[0].id), details: req.body });
     res.json({ report: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/reports/:userId/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM daily_reports WHERE id = $1 AND user_id = $2', [req.params.id, req.params.userId]);
+    await logAction({ userId: req.params.userId, action: 'delete', entity: 'daily_report', entityId: req.params.id });
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
