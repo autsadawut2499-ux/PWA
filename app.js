@@ -43,6 +43,49 @@ function saveUsers() { saveGlobal('users', users); }
 function loadCurrentUser() { currentUser = loadGlobal('currentUser', null); }
 function saveCurrentUser() { saveGlobal('currentUser', currentUser); }
 
+function mapDbUser(row) {
+  return {
+    id: row.id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    position: row.position,
+    phone: row.phone,
+    project: row.project || '',
+    isAdmin: row.is_admin || false
+  };
+}
+
+async function ensureCurrentUserSynced() {
+  if (!currentUser) return;
+  const res = await fetch(`${API_BASE}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(currentUser)
+  });
+  if (!res.ok) throw new Error('User sync failed');
+  const j = await res.json();
+  const dbUser = j.user ? mapDbUser(j.user) : null;
+  if (dbUser && dbUser.id && dbUser.id !== currentUser.id) {
+    const oldId = currentUser.id;
+    currentUser.id = dbUser.id;
+    const idx = users.findIndex((u) => u.phone === currentUser.phone);
+    if (idx >= 0) users[idx].id = dbUser.id;
+    saveCurrentUser();
+    saveUsers();
+    if (oldId) {
+      const prefix = `u_${oldId}_`;
+      Object.keys(localStorage).forEach((k) => {
+        if (k.startsWith(prefix)) {
+          const suffix = k.slice(prefix.length);
+          const val = localStorage.getItem(k);
+          if (val !== null) localStorage.setItem(userKey(suffix), val);
+          localStorage.removeItem(k);
+        }
+      });
+    }
+  }
+}
+
 loadUsers();
 loadCurrentUser();
 
@@ -163,15 +206,16 @@ function renderForCurrentUser() {
   renderHouses();
 }
 
-function initAuth() {
+async function initAuth() {
   if (currentUser) {
     showApp();
-    loadFromBackend().then(() => {
-      openDB().then(() => {
-        renderPlans();
-        renderForCurrentUser();
-      }).catch(() => {});
-    }).catch(() => {});
+    try { await ensureCurrentUserSynced(); } catch (e) { console.error('ensureCurrentUserSynced failed:', e); }
+    try {
+      await loadFromBackend();
+      await openDB();
+      renderPlans();
+      renderForCurrentUser();
+    } catch (e) { console.error('initAuth data load failed:', e); }
   } else {
     showAuth();
   }
@@ -192,15 +236,21 @@ $('registerForm').addEventListener('submit', async (e) => {
     project: $('regProject').value.trim() || ''
   };
   try {
-    await fetch(`${API_BASE}/register`, {
+    const res = await fetch(`${API_BASE}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(user)
     });
+    const j = await res.json();
+    if (j.user) {
+      const dbUser = mapDbUser(j.user);
+      Object.assign(user, dbUser);
+    }
   } catch (err) {
     console.error('Backend registration failed (saved locally):', err);
   }
-  users.push(user);
+  const idx = users.findIndex((u) => u.phone === user.phone);
+  if (idx >= 0) users[idx] = user; else users.push(user);
   saveUsers();
   currentUser = user;
   saveCurrentUser();
@@ -213,32 +263,27 @@ $('loginForm').addEventListener('submit', async (e) => {
   const phone = sanitizePhone($('loginPhone').value);
   if (!phone) { alert('กรุณากรอกเบอร์โทร'); return; }
   let user = users.find((u) => u.phone === phone);
-  if (!user) {
-    try {
-      const res = await fetch(`${API_BASE}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
-      });
-      if (!res.ok) { alert('ไม่พบผู้ใช้ กรุณาลงทะเบียน'); return; }
-      const j = await res.json();
-      const dbUser = j.user;
-      if (!dbUser) { alert('ไม่พบผู้ใช้ กรุณาลงทะเบียน'); return; }
-      user = {
-        id: dbUser.id,
-        firstName: dbUser.first_name,
-        lastName: dbUser.last_name,
-        position: dbUser.position,
-        phone: dbUser.phone,
-        project: dbUser.project || ''
-      };
+  try {
+    const res = await fetch(`${API_BASE}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    if (!res.ok) { alert('ไม่พบผู้ใช้ กรุณาลงทะเบียน'); return; }
+    const j = await res.json();
+    const dbUserRaw = j.user;
+    if (!dbUserRaw) { alert('ไม่พบผู้ใช้ กรุณาลงทะเบียน'); return; }
+    const dbUser = mapDbUser(dbUserRaw);
+    if (user) {
+      Object.assign(user, dbUser);
+    } else {
+      user = dbUser;
       users.push(user);
-      saveUsers();
-    } catch (err) {
-      console.error('Backend login failed:', err);
-      alert('ไม่พบผู้ใช้ กรุณาลงทะเบียน');
-      return;
     }
+    saveUsers();
+  } catch (err) {
+    console.error('Backend login failed:', err);
+    if (!user) { alert('ไม่พบผู้ใช้ กรุณาลงทะเบียน'); return; }
   }
   currentUser = user;
   saveCurrentUser();

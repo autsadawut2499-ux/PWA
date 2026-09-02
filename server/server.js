@@ -217,12 +217,21 @@ app.get('/api/history', async (req, res) => {
 
 app.post('/api/register', async (req, res) => {
   try {
-    const { firstName, lastName, position, phone, project, isAdmin } = req.body;
-    const id = 'u_' + phone.replace(/\D/g, '') + '_' + Date.now().toString(36).slice(-4);
+    const { firstName, lastName, position, phone, project, isAdmin, id } = req.body;
+    const cleanPhone = (phone || '').replace(/\D/g, '');
+    if (!cleanPhone) return res.status(400).json({ error: 'Phone required' });
+    const newId = id || 'u_' + cleanPhone + '_' + Date.now().toString(36).slice(-4);
     const result = await pool.query(
       `INSERT INTO users (id, first_name, last_name, position, phone, project, is_admin)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [id, firstName, lastName, position, phone, project || '', isAdmin || false]
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (phone) DO UPDATE SET
+         first_name = EXCLUDED.first_name,
+         last_name = EXCLUDED.last_name,
+         position = EXCLUDED.position,
+         project = EXCLUDED.project,
+         is_admin = EXCLUDED.is_admin
+       RETURNING *`,
+      [newId, firstName || '', lastName || '', position || '', cleanPhone, project || '', isAdmin || false]
     );
     res.json({ user: result.rows[0] });
   } catch (err) {
